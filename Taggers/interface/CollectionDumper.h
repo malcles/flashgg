@@ -153,6 +153,18 @@ namespace flashgg {
         edm::FileInPath NNLOPSWeightFile_;
         std::vector<std::unique_ptr<TGraph> > NNLOPSWeights_;
 
+        int stxsNJet_;
+        edm::InputTag stxsNJetTag_;
+        edm::EDGetTokenT<int> stxsNJetToken_;
+
+        float stxsPtH_;
+        edm::InputTag stxsPtHTag_;
+        edm::EDGetTokenT<float> stxsPtHToken_;
+
+        //        correctionFile_ = conf.getParameter<edm::FileInPath>("CorrectionFile")
+        edm::FileInPath NNLOPSWeightFile_;
+        std::vector<std::unique_ptr<TGraph> > NNLOPSWeights_;
+
         //std::map<std::string, std::vector<dumper_type> > dumpers_; FIXME template key
         std::map< KeyT, std::vector<dumper_type> > dumpers_;
         RooWorkspace *ws_;
