@@ -43,10 +43,22 @@ namespace flashgg {
                                        bool
                                        ) override;
 
+        // for dimuon studies
+        edm::Ptr<reco::Vertex> select( const edm::Ptr<pat::Muon> &, const edm::Ptr<pat::Muon> &, const std::vector<edm::Ptr<reco::Vertex> > &,
+                                       const VertexCandidateMap &vertexCandidateMap,
+                                       const math::XYZPoint &
+                                       ) override;
+
 
         void writeInfoFromLastSelectionTo( flashgg::DiPhotonCandidate & ) override;
         void writeInfoFromLastSelectionTo( flashgg::PhotonJetCandidate & ) override;
 
+        void getInfoFromLastSelection( float& ) override;
+        void getAllInfoFromLastSelection( vector<float>& ) override;
+        
+        void getAllInfoFromLastSelectionForVtxIdx(vector<float>&  , unsigned int ) override; 
+        int getSortedIndexFromLastSelection( unsigned int ) override;
+        
         double vtxZFromConvOnly( const edm::Ptr<flashgg::Photon> &, const edm::Ptr<reco::Conversion> &, const math::XYZPoint & ) const;
         double vtxZFromConvSuperCluster( const edm::Ptr<flashgg::Photon> &, const edm::Ptr<reco::Conversion> &, const math::XYZPoint & ) const;
         double vtxZFromConv( const edm::Ptr<flashgg::Photon> &, const edm::Ptr<reco::Conversion> &, const math::XYZPoint & ) const;
@@ -1003,7 +1015,171 @@ namespace flashgg {
     }
 
 
+         edm::Ptr<reco::Vertex> LegacyVertexSelector::select( const  edm::Ptr<pat::Muon>  &g1, const edm::Ptr<pat::Muon> &g2,
+                                                         const std::vector<edm::Ptr<reco::Vertex> > &vtxs,
+                                                         const VertexCandidateMap &vertexCandidateMap,
+                                                         const math::XYZPoint &beamSpot)
+    {
         
+        vlogsumpt2_.clear();
+        vptbal_.clear();
+        vptasym_.clear();
+        vpull_conv_.clear();
+        vnConv_.clear();
+        vmva_value_.clear();
+        vVtxPtr_.clear();
+        vmva_sortedindex_.clear();
+        
+        std::vector<std::pair<unsigned int, float> > sorter;
+
+        unsigned int vertex_index;
+
+        unsigned int selected_vertex_index = 0;
+        unsigned int second_selected_vertex_index = 0;
+        unsigned int third_selected_vertex_index = 0;
+        float max_mva_value = -999;
+        float second_max_mva_value = -999;
+        float third_max_mva_value = -999;
+
+        if( !initialized_ ) {
+            Initialize();
+        }
+
+        std::vector<float> vlogsumpt2;
+        std::vector<float> vptbal;
+        std::vector<float> vptasym;
+        std::vector<float> vpull_conv;
+        std::vector<float> vnConv;
+        std::vector<float> vmva_value;
+
+        std::vector<edm::Ptr<reco::Vertex> >  vVtxPtr;
+
+        for( vertex_index = 0 ; vertex_index < vtxs.size() ; vertex_index++ ) {
+            edm::Ptr<reco::Vertex> vtx = vtxs[vertex_index];
+
+            TLorentzVector p14;
+            p14.SetPxPyPzE(g1->px(), g1->py(), g1->pz(), g1->energy());
+            TLorentzVector p24;
+            p24.SetPxPyPzE(g2->px(), g2->py(), g2->pz(), g2->energy());
+
+            TVector2 sumpt;
+            double sumpt2_out = 0;
+            double sumpt2_in = 0;
+            double ptbal = 0;
+            double ptasym = 0;
+
+            sumpt.Set( 0., 0. );
+
+            auto mapRange = std::equal_range( vertexCandidateMap.begin(), vertexCandidateMap.end(), vtx, flashgg::compare_with_vtx() );
+            if( mapRange.first == mapRange.second ) { continue; }
+
+            for( auto pair_iter = mapRange.first ; pair_iter != mapRange.second ; pair_iter++ ) {
+                const edm::Ptr<pat::PackedCandidate> cand = pair_iter->second;
+                
+                TVector3 tk;
+                TVector2 tkXY;
+                double dr1 = 0;
+                double dr2 = 0;
+                double dpt1 = 0;
+                double dpt2 = 0;
+                tk.SetXYZ( cand->px(), cand->py(), cand->pz() );
+                tkXY = tk.XYvector();
+                dr1 = fabs(tk.DeltaR( p14.Vect() ));
+                dr2 = fabs(tk.DeltaR( p24.Vect() ));
+                dpt1=fabs(tk.Pt()-g1->pt());
+                dpt2=fabs(tk.Pt()-g2->pt());
+
+                // mumu: skip tracks around the muon
+                
+                if( (dr2<0.002 && dpt2<0.1) ||  (dr1<0.002 && dpt1<0.1)) continue;	  
+	  	   
+                bool isPure = cand->trackHighPurity();
+                if( !isPure && trackHighPurity ) { continue; }
+
+                if( dr1 < dRexclude || dr2 < dRexclude ) {
+                    sumpt2_in += tkXY.Mod2();
+                    continue;
+                }
+                sumpt += tkXY;
+                sumpt2_out += tkXY.Mod2();
+                ptbal -= tkXY * ( p14 + p24 ).Vect().XYvector().Unit();
+            }
+
+            ptasym = ( sumpt.Mod() - ( p14 + p24 ).Vect().XYvector().Mod() ) / ( sumpt.Mod() + ( p14 + p24 ).Vect().XYvector().Mod() );
+            ptasym_ = ptasym;
+
+            float nConv = 0;
+
+            float pull_conv = 999;
+
+            if( pull_conv > 10. ) { pull_conv = 10.; }
+
+            logsumpt2_ = log( sumpt2_in + sumpt2_out );
+            ptbal_ = ptbal;
+            pull_conv_ = pull_conv;
+            nConv_ = nConv;
+            float mva_value = VertexIdMva_->EvaluateMVA( "BDT" );
+
+            vlogsumpt2.push_back( logsumpt2_ );
+            vptbal.push_back( ptbal_ );
+            vptasym.push_back( ptasym_ );
+            vpull_conv.push_back( pull_conv_ );
+            vnConv.push_back( nConv_ );
+            vmva_value.push_back( mva_value );
+            vVtxPtr.push_back( vtx );
+
+            std::pair<unsigned int, float>pairToSort = std::make_pair( vmva_value.size() - 1, mva_value );
+            sorter.push_back( pairToSort );
+
+            if( mva_value > max_mva_value ) {
+                max_mva_value = mva_value;
+                selected_vertex_index = vertex_index;
+                logsumpt2selected_ = logsumpt2_;
+                ptbalselected_ = ptbal_;
+                ptasymselected_ = ptasym_;
+            }
+        }
+
+        std::sort( sorter.begin(), sorter.end(), Sorter() );
+
+        if( sorter.size() > 1 ) {
+            second_max_mva_value = sorter[1].second;
+            second_selected_vertex_index = sorter[1].first;
+        }
+        if( sorter.size() > 2 ) {
+            third_max_mva_value = sorter[2].second;
+            third_selected_vertex_index = sorter[2].first;
+        }
+
+
+        for( unsigned int jj = 0; jj < sorter.size(); jj++ ) {
+
+            if( vlogsumpt2_.size() < nVtxSaveInfo ) {
+
+                vmva_sortedindex_.push_back( sorter[jj].first );
+                vlogsumpt2_.push_back( vlogsumpt2[sorter[jj].first] );
+                vptbal_.push_back( vptbal[sorter[jj].first] );
+                vptasym_.push_back( vptasym[sorter[jj].first] );
+                vpull_conv_.push_back( vpull_conv[sorter[jj].first] );
+                vnConv_.push_back( vnConv[sorter[jj].first] );
+                vmva_value_.push_back( vmva_value[sorter[jj].first] );
+                vVtxPtr_.push_back( vVtxPtr[sorter[jj].first] );
+            }
+
+        }
+        dipho_pt_ = ( g1->p4() + g2->p4() ).pt();
+        nVert_    = vtxs.size();
+        MVA0_     = max_mva_value;
+        MVA1_     = second_max_mva_value;
+        dZ1_      = vtxs[selected_vertex_index]->position().z() - vtxs[second_selected_vertex_index]->position().z();
+        MVA2_     = third_max_mva_value;
+        dZ2_      = vtxs[selected_vertex_index]->position().z() - vtxs[third_selected_vertex_index]->position().z();
+
+        vtxprobmva_ = VertexProbMva_->EvaluateMVA( "BDT" );
+
+        return vtxs[selected_vertex_index];
+
+    }
 
 
     void LegacyVertexSelector::writeInfoFromLastSelectionTo( flashgg::DiPhotonCandidate &dipho )
@@ -1061,6 +1237,41 @@ namespace flashgg {
         phojet.setVMVASortedIndex( vmva_sortedindex_ );
 
         phojet.setVtxProbMVA( vtxprobmva_ );
+    }
+
+
+    void LegacyVertexSelector::getInfoFromLastSelection( float&mvaprob )
+    {
+        mvaprob=vtxprobmva_ ;
+    }
+
+    void LegacyVertexSelector::getAllInfoFromLastSelection(vector<float>& all )
+    {
+        all.push_back(vtxprobmva_);
+        all.push_back(logsumpt2selected_);
+        all.push_back( ptbalselected_ );
+        all.push_back( ptasymselected_ );
+        all.push_back( dZ1_);
+        all.push_back( dZ2_);
+
+    }
+
+    void LegacyVertexSelector::getAllInfoFromLastSelectionForVtxIdx(vector<float>& all , unsigned int iVertex )
+    {
+        if(iVertex<vmva_value_.size()){
+            all.push_back(vmva_value_[iVertex]);
+            all.push_back(vlogsumpt2_[iVertex]);
+            all.push_back( vptbal_[iVertex]);
+            all.push_back( vptasym_[iVertex]);            
+        }
+    }
+
+
+    int LegacyVertexSelector::getSortedIndexFromLastSelection( unsigned int iVertex )
+    {
+        if(iVertex<vmva_sortedindex_.size()){
+            return vmva_sortedindex_[iVertex];
+        }else return -1;
     }
 
 } // namespace flashgg
