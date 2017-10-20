@@ -153,6 +153,8 @@ namespace flashgg {
         edm::FileInPath NNLOPSWeightFile_;
         std::vector<std::unique_ptr<TGraph> > NNLOPSWeights_;
 
+        bool reweighGGHforNNLOPS_;
+
         int stxsNJet_;
         edm::InputTag stxsNJetTag_;
         edm::EDGetTokenT<int> stxsNJetToken_;
@@ -247,6 +249,10 @@ namespace flashgg {
         classifier_          = cfg.getParameter<edm::ParameterSet>( "classifierCfg" );
         throwOnUnclassified_ = cfg.exists("throwOnUnclassified") ? cfg.getParameter<bool>("throwOnUnclassified") : false;
         splitPdfByStage0Cat_ = cfg.getUntrackedParameter<bool>( "splitPdfByStage0Cat", false);
+        reweighGGHforNNLOPS_ = cfg.getUntrackedParameter<bool>( "reweighGGHforNNLOPS", false);
+        if (reweighGGHforNNLOPS_) {
+            std::cout << " WARNING: reweighing for NNLOPS, this should be a ggH sample, please check!" << std::endl;
+        }
 
         reweighGGHforNNLOPS_ = cfg.getUntrackedParameter<bool>( "reweighGGHforNNLOPS", false);
         if (reweighGGHforNNLOPS_) {
