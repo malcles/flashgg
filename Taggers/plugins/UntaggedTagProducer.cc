@@ -9,6 +9,7 @@
 
 #include "flashgg/DataFormats/interface/DiPhotonCandidate.h"
 #include "flashgg/DataFormats/interface/DiPhotonMVAResult.h"
+#include "flashgg/DataFormats/interface/Jet.h"
 #include "flashgg/DataFormats/interface/UntaggedTag.h"
 #include "flashgg/DataFormats/interface/TagTruthBase.h"
 #include "DataFormats/Common/interface/RefToPtr.h"
@@ -43,6 +44,10 @@ namespace flashgg {
         string systLabel_;
         bool requireScaledPtCuts_;
 
+        std::vector<edm::EDGetTokenT<View<flashgg::Jet> > > tokenJets_;
+        std::vector<edm::InputTag> inputTagJets_;
+        typedef std::vector<edm::Handle<edm::View<flashgg::Jet> > > JetCollectionVector;
+
         vector<double> boundaries;
 
     };
@@ -52,7 +57,8 @@ namespace flashgg {
         mvaResultToken_( consumes<View<flashgg::DiPhotonMVAResult> >( iConfig.getParameter<InputTag> ( "MVAResultTag" ) ) ),
         genParticleToken_( consumes<View<reco::GenParticle> >( iConfig.getParameter<InputTag> ( "GenParticleTag" ) ) ),
         systLabel_( iConfig.getParameter<string> ( "SystLabel" ) ),
-        requireScaledPtCuts_   ( iConfig.getParameter<bool> ( "RequireScaledPtCuts" ) )
+        requireScaledPtCuts_   ( iConfig.getParameter<bool> ( "RequireScaledPtCuts" ) ),
+        inputTagJets_ ( iConfig.getParameter<std::vector<edm::InputTag> >( "inputTagJets" ) )
     {
         boundaries = iConfig.getParameter<vector<double > >( "Boundaries" );
 
@@ -66,6 +72,11 @@ namespace flashgg {
         pTVToken_ = consumes<float>( HTXSps.getParameter<InputTag>("pTV") );
         newHTXSToken_ = consumes<HTXS::HiggsClassification>( HTXSps.getParameter<InputTag>("ClassificationObj") );
 
+
+        for (unsigned i = 0 ; i < inputTagJets_.size() ; i++) {
+            auto token = consumes<View<flashgg::Jet> >(inputTagJets_[i]);
+            tokenJets_.push_back(token);
+        }
 
         produces<vector<UntaggedTag> >();
         produces<vector<TagTruthBase> >();
@@ -102,6 +113,11 @@ namespace flashgg {
         evt.getByToken( mvaResultToken_, mvaResults );
 //   const PtrVector<flashgg::DiPhotonMVAResult>& mvaResultPointers = mvaResults->ptrVector();
 
+        JetCollectionVector Jets( inputTagJets_.size() );
+        for( size_t j = 0; j < inputTagJets_.size(); ++j ) {
+            evt.getByToken( tokenJets_[j], Jets[j] );
+        }
+
         Handle<View<reco::GenParticle> > genParticles;
 
         std::unique_ptr<vector<UntaggedTag> > tags( new vector<UntaggedTag> );
@@ -137,6 +153,9 @@ namespace flashgg {
 
             int catnum = chooseCategory( mvares->result );
             tag_obj.setCategoryNumber( catnum );
+
+            unsigned int jetCollectionIndex = diPhotons->ptrAt( candIndex )->jetCollectionIndex();
+            tag_obj.computeStage1Kinematics( Jets[jetCollectionIndex] );
 
             tag_obj.includeWeights( *dipho );
 

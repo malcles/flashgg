@@ -91,6 +91,10 @@ namespace flashgg {
         vector<double> electronEtaThresholds_;
         bool useElectronMVARecipe_;
         bool useElectronLooseID_;
+
+        std::vector<edm::EDGetTokenT<View<flashgg::Jet> > > tokenJets_;
+        std::vector<edm::InputTag> inputTagJets_;
+        typedef std::vector<edm::Handle<edm::View<flashgg::Jet> > > JetCollectionVector;
         
     };
 
@@ -102,7 +106,8 @@ namespace flashgg {
         vertexToken_( consumes<View<reco::Vertex> >( iConfig.getParameter<InputTag> ( "VertexTag" ) ) ),
         genParticleToken_( consumes<View<reco::GenParticle> >( iConfig.getParameter<InputTag> ( "GenParticleTag" ) ) ),
         rhoTag_( consumes<double>( iConfig.getParameter<InputTag>( "rhoTag" ) ) ),
-        systLabel_( iConfig.getParameter<string> ( "SystLabel" ) )
+        systLabel_( iConfig.getParameter<string> ( "SystLabel" ) ),
+        inputTagJets_ ( iConfig.getParameter<std::vector<edm::InputTag> >( "inputTagJets" ) )
     {
         
         leptonPtThreshold_ = iConfig.getParameter<double>( "leptonPtThreshold");
@@ -167,6 +172,11 @@ namespace flashgg {
 
         Handle<View<flashgg::Electron> > theElectrons;
         evt.getByToken( electronToken_, theElectrons );
+
+        JetCollectionVector Jets( inputTagJets_.size() );
+        for( size_t j = 0; j < inputTagJets_.size(); ++j ) {
+            evt.getByToken( tokenJets_[j], Jets[j] );
+        }
 
         edm::Handle<double>  rho;
         evt.getByToken(rhoTag_,rho);
@@ -324,9 +334,13 @@ namespace flashgg {
                 if(isDiMuon){
                     ZHLeptonicTags_obj.includeWeightsByLabel( *tagMuons.at(0), "MuonWeight");
                     ZHLeptonicTags_obj.includeWeightsByLabel( *tagMuons.at(1), "MuonWeight");
+                    unsigned int jet_i = diPhotons->ptrAt( diphoIndex )->jetCollectionIndex();
+                    ZHLeptonicTags_obj.computeStage1Kinematics( Jets[jet_i], (tagMuons.at(0)->p4() + tagMuons.at(1)->p4()).pt(), tagMuons.at(0)->eta(), tagMuons.at(0)->phi(), tagMuons.at(1)->eta(), tagMuons.at(1)->phi() );
                 } else if(isDiElectron){
                     ZHLeptonicTags_obj.includeWeights( *tagElectrons.at(0) );
                     ZHLeptonicTags_obj.includeWeights( *tagElectrons.at(1) );
+                    unsigned int jet_i = diPhotons->ptrAt( diphoIndex )->jetCollectionIndex();
+                    ZHLeptonicTags_obj.computeStage1Kinematics( Jets[jet_i], (tagElectrons.at(0)->p4() + tagElectrons.at(1)->p4()).pt(), tagElectrons.at(0)->eta(), tagElectrons.at(0)->phi(), tagElectrons.at(1)->eta(), tagElectrons.at(1)->phi() );
                 }
                 ZHLeptonicTags_obj.setDiPhotonIndex( diphoIndex );
                 ZHLeptonicTags_obj.setSystLabel( systLabel_ );

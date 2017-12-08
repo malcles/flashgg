@@ -31,7 +31,8 @@ flashggUntagged = cms.EDProducer("FlashggUntaggedTagProducer",
                                  GenParticleTag = cms.InputTag( "flashggPrunedGenParticles" ),
                                  Boundaries     = cms.vdouble(-0.405,0.204,0.564,0.864), #,1.000),
                                  RequireScaledPtCuts = cms.bool(True),
-                                 HTXSTags     = HTXSInputTags
+                                 HTXSTags     = HTXSInputTags,
+                                 inputTagJets = UnpackedJetCollectionVInputTag
 )
 
 flashggSigmaMoMpToMTag = cms.EDProducer("FlashggSigmaMpTTagProducer",
@@ -136,7 +137,8 @@ flashggVBFTag = cms.EDProducer("FlashggVBFTagProducer",
                                VBFPreselSubleadPtMin = cms.double(30.),
                                VBFPreselPhoIDMVAMin = cms.double(-0.2),
                                GetQCDWeights = cms.bool(False),
-                               HTXSTags     = HTXSInputTags
+                               HTXSTags     = HTXSInputTags,
+                               inputTagJets = UnpackedJetCollectionVInputTag
                                )
 
 
