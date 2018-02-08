@@ -540,6 +540,8 @@ namespace flashgg {
                for( unsigned int i = 0; i < Electrons.size(); ++i )
                     tthltags_obj.includeWeights( *Electrons.at(i));
 
+                tthltags_obj.setStage1KinematicLabel( "RECO_TTH_LEP" );
+                tthltags_obj.setStage1recoTag( DiPhotonTagBase::RECO_TTH_LEP );
                 tthltags_obj.includeWeights( *dipho );
                 tthltags_obj.setJets( tagJets );
                 tthltags_obj.setMuons( Muons );
