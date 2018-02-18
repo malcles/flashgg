@@ -98,6 +98,7 @@ namespace flashgg {
         int getStage0cat( const edm::EventBase &event );
         int getStxsNJet( const edm::EventBase &event );
         float getStxsPtH( const edm::EventBase &event );
+        int getStage1cat( const edm::EventBase &event );
 
         classifier_type classifier_;
 
@@ -142,20 +143,10 @@ namespace flashgg {
         edm::EDGetTokenT<int> stage0catToken_;
         edm::InputTag newHTXSTag_;
         edm::EDGetTokenT<HTXS::HiggsClassification> newHTXSToken_;  
-
-        int stxsNJet_;
-        edm::InputTag stxsNJetTag_;
-        edm::EDGetTokenT<int> stxsNJetToken_;
-
-        float stxsPtH_;
-        edm::InputTag stxsPtHTag_;
-        edm::EDGetTokenT<float> stxsPtHToken_;
-
-        //        correctionFile_ = conf.getParameter<edm::FileInPath>("CorrectionFile")
-        edm::FileInPath NNLOPSWeightFile_;
-        std::vector<std::unique_ptr<TGraph> > NNLOPSWeights_;
-
-        bool reweighGGHforNNLOPS_;
+        bool splitPdfByStage1Cat_;
+        int stage1cat_;
+        edm::InputTag stage1catTag_;
+        edm::EDGetTokenT<int> stage1catToken_;
 
         int stxsNJet_;
         edm::InputTag stxsNJetTag_;
@@ -195,6 +186,7 @@ namespace flashgg {
         dumpGlobalVariables_( cfg.getUntrackedParameter<bool>( "dumpGlobalVariables", true ) ),
         globalVarsDumper_(0)
     {
+        std::cout << "CollectionDumper" << std::endl;
         if( dumpGlobalVariables_ ) {
             globalVarsDumper_ = new GlobalVariablesDumper( cfg.getParameter<edm::ParameterSet>( "globalVariables" ) );
         }
@@ -216,8 +208,13 @@ namespace flashgg {
         dumpGlobalVariables_( cfg.getUntrackedParameter<bool>( "dumpGlobalVariables", true ) ),
         stage0catTag_( cfg.getUntrackedParameter<edm::InputTag>( "stage0catTag", edm::InputTag("rivetProducerHTXS","stage0cat") ) ),
         stage0catToken_( cc.consumes<int>( stage0catTag_ ) ),
+<<<<<<< HEAD
         newHTXSTag_( cfg.getUntrackedParameter<edm::InputTag>( "classificationObj", edm::InputTag("rivetProducerHTXS","HiggsClassification") ) ),
         newHTXSToken_( cc.consumes<HTXS::HiggsClassification>( newHTXSTag_ ) ),
+=======
+        stage1catTag_( cfg.getUntrackedParameter<edm::InputTag>( "stage1catTag", edm::InputTag("rivetProducerHTXS","stage1cat") ) ),
+        stage1catToken_( cc.consumes<int>( stage1catTag_ ) ),
+>>>>>>> debugging messages, fix one crash by splitting pdfs by stage1 when appropriate
         stxsNJetTag_( cfg.getUntrackedParameter<edm::InputTag>( "stxsNJetTag", edm::InputTag("rivetProducerHTXS","njets") ) ),
         stxsNJetToken_( cc.consumes<int>( stxsNJetTag_  ) ),
         stxsPtHTag_( cfg.getUntrackedParameter<edm::InputTag>( "stxsPtHTag", edm::InputTag("rivetProducerHTXS","pTH") ) ),
@@ -251,6 +248,7 @@ namespace flashgg {
         classifier_          = cfg.getParameter<edm::ParameterSet>( "classifierCfg" );
         throwOnUnclassified_ = cfg.exists("throwOnUnclassified") ? cfg.getParameter<bool>("throwOnUnclassified") : false;
         splitPdfByStage0Cat_ = cfg.getUntrackedParameter<bool>( "splitPdfByStage0Cat", false);
+        splitPdfByStage1Cat_ = cfg.getUntrackedParameter<bool>( "splitPdfByStage1Cat", false);
         reweighGGHforNNLOPS_ = cfg.getUntrackedParameter<bool>( "reweighGGHforNNLOPS", false);
         if (reweighGGHforNNLOPS_) {
             std::cout << " WARNING: reweighing for NNLOPS, this should be a ggH sample, please check!" << std::endl;
@@ -394,7 +392,7 @@ namespace flashgg {
             }
         }
         std::cout << "done loop over dumpers" << std::endl;
-        if (splitPdfByStage0Cat_ && dumpPdfWeights_) {
+        if ( ( splitPdfByStage0Cat_ || splitPdfByStage1Cat_ ) && dumpPdfWeights_) {
             NNLOPSWeightFile_ = cfg.getParameter<edm::FileInPath>( "NNLOPSWeightFile" );
             TFile* f = TFile::Open(NNLOPSWeightFile_.fullPath().c_str());
             NNLOPSWeights_.emplace_back((TGraph*)((TGraph*) f->Get("gr_NNLOPSratio_pt_mcatnlo_0jet"))->Clone() );
@@ -516,6 +514,18 @@ namespace flashgg {
     }
 
     template<class C, class T, class U>
+    int CollectionDumper<C, T, U>::getStage1cat( const edm::EventBase &event ) {
+        edm::Handle<int> stage1cat;
+        const edm::Event * fullEvent = dynamic_cast<const edm::Event *>(&event);
+        if (fullEvent != 0) {
+            fullEvent->getByToken(stage1catToken_, stage1cat);
+        } else {
+            event.getByLabel(stage1catTag_, stage1cat);
+        }
+        return (*(stage1cat.product() ) );
+    }
+
+    template<class C, class T, class U>
     int CollectionDumper<C, T, U>::getStxsNJet( const edm::EventBase &event ) {
         edm::Handle<int> stxsNJet;
         const edm::Event * fullEvent = dynamic_cast<const edm::Event *>(&event);
@@ -633,10 +643,11 @@ namespace flashgg {
                 for (unsigned int i = 0; i < pdfWeights_.size() ; i++){
                     pdfWeights_[i]= (pdfWeights_[i] )*(lumiWeight_/weight_); // ie pdfWeight/nominal MC weight
                 }
-                if ( splitPdfByStage0Cat_ ) {
+                if ( splitPdfByStage0Cat_ || splitPdfByStage1Cat_ ) {
                     stage0cat_ = getStage0cat( event );
                     stxsNJet_ = getStxsNJet( event );
                     stxsPtH_ = getStxsPtH( event );
+                    stage1cat_ = getStage1cat( event );
                     //                    std::cout << " IN CollectionDumper::analyze set stage0cat to " << stage0cat_ << " and stxsNjet_ to " << stxsNJet_ << " and stxsPtH_ to " << stxsPtH_ << std::endl;
                     if (reweighGGHforNNLOPS_) {
                         float extraweight = 1.;
@@ -665,7 +676,7 @@ namespace flashgg {
 
                     fillWeight =fillWeight*(tag->centralWeight());
                     }
-                    which->second[isub].fill( cand, fillWeight, pdfWeights_, maxCandPerEvent_ - nfilled, stage0cat_ );
+                    which->second[isub].fill( cand, fillWeight, pdfWeights_, maxCandPerEvent_ - nfilled, splitPdfByStage0Cat_ ? stage0cat_ : stage1cat_ );
                     --nfilled;
                 } else if( throwOnUnclassified_ ) {
                     throw cms::Exception( "Runtime error" ) << "could not find dumper for category [" << cat.first << "," << cat.second << "]"
