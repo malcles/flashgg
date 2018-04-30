@@ -40,7 +40,6 @@ jetSystematicsInputTags = createStandardSystematicsProducers(process , MUON_ID=M
 if dropVBFInNonGold:
     process.flashggVBFTag.SetArbitraryNonGoldMC = True
     process.flashggVBFTag.DropNonGoldData = True
-modifyTagSequenceForSystematics(process,jetSystematicsInputTags)
 
 systlabels = [""]
 phosystlabels = []
@@ -135,6 +134,8 @@ print 'doFiducial '+str(customize.doFiducial)
 print 'acceptance '+str(customize.acceptance)
 print 'tthTagsOnly '+str(customize.tthTagsOnly)
 print 'doMuFilter '+str(customize.doMuFilter)
+
+modifyTagSequenceForSystematics(process,jetSystematicsInputTags,False,customize.doStage1)
 
 if customize.doFiducial:
     import flashgg.Systematics.fiducialCrossSectionsCustomize as fc
@@ -322,7 +323,8 @@ print "--- Variables to be dumped, including systematic weights ---"
 print variablesToUse
 print "------------------------------------------------------------"
 
-
+if customize.doStage1:
+  process.flashggTagSorter.DoStage1RecoTags = True
 
 
 #from flashgg.Taggers.globalVariables_cff import globalVariables
