@@ -78,7 +78,7 @@ def createStandardSystematicsProducers(process, MUON_ID="Loose" , MUON_ISO="Loos
     jetSystematicsInputTags = createJetSystematics(process,UnpackedJetCollectionVInputTag)
     return jetSystematicsInputTags
 
-def modifyTagSequenceForSystematics(process,jetSystematicsInputTags,ZPlusJetMode=False,Stage1=True):
+def modifyTagSequenceForSystematics(process,jetSystematicsInputTags,ZPlusJetMode=False,Stage1=False):
     process.flashggTagSequence.remove(process.flashggUnpackedJets) # to avoid unnecessary cloning
     process.flashggTagSequence.remove(process.flashggUpdatedIdMVADiPhotons) # Needs to be run before systematics
     from PhysicsTools.PatAlgos.tools.helpers import cloneProcessingSnippet,massSearchReplaceAnyInputTag
