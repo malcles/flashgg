@@ -40,187 +40,256 @@ void StageOneTag::computeStage1Kinematics( const edm::Handle<edm::View<flashgg::
     float dEta = 0.;
     float mjj = 0.;
     float ptHjj = 0.;
+    float mvaScore = this->diPhotonMVA().mvaValue();
     edm::Ptr<flashgg::Jet> j0;
     edm::Ptr<flashgg::Jet> j1;
     for ( unsigned int i = 0 ; i < jets->size(); i++ ) {
         edm::Ptr<flashgg::Jet> jet = jets->ptrAt(i);
 
-        //        std::cout << " Jet " << i << " pt=" << jet->pt() << " eta=" << jet->eta() << std::endl;                                                                                                                                    
+        //        std::cout << " Jet " << i << " pt=" << jet->pt() << " eta=" << jet->eta() << std::endl;
 
         if ( jet->pt() < 30. ) continue;
         if ( fabs(jet->eta()) > 4.7 ) continue;
-        bool _useJetID = true; // temporary                                                                                                                                                                                                  
-        std::string _JetIDLevel = "Tight"; // temporary                                                                                                                                                                                      
-        float _drJetPhoton = 0.4; // Temporary                                                                                                                                                                                               
-        float _drJetLepton = 0.4; // Temporary                                                                                                                                                                                               
-        // Temporary: No PU JET ID                                                                                                                                                                                                           
+        bool _useJetID = true; // temporary
+        std::string _JetIDLevel = "Tight"; // temporary
+        float _drJetPhoton = 0.4; // Temporary
+        float _drJetLepton = 0.4; // Temporary
+        // Temporary: No PU JET ID
         if( _useJetID ){
             if( _JetIDLevel == "Loose" && !jet->passesJetID  ( flashgg::Loose ) ) continue;
             if( _JetIDLevel == "Tight" && !jet->passesJetID  ( flashgg::Tight ) ) continue;
+        }
 
-            // close to lead photon?
-            float dPhi = deltaPhi( jet->phi(), this->diPhoton()->leadingPhoton()->phi() );
-            float dEta = jet->eta() - this->diPhoton()->leadingPhoton()->eta();
-            if( sqrt( dPhi * dPhi + dEta * dEta ) < _drJetPhoton ) { continue; }
+        // close to lead photon?                                                                                                                                                                                                                          
+        float dPhi = deltaPhi( jet->phi(), this->diPhoton()->leadingPhoton()->phi() );
+        float dEta = jet->eta() - this->diPhoton()->leadingPhoton()->eta();
+        if( sqrt( dPhi * dPhi + dEta * dEta ) < _drJetPhoton ) { continue; }
 
-            // close to sublead photon?
-            dPhi = deltaPhi( jet->phi(), this->diPhoton()->subLeadingPhoton()->phi() );
-            dEta = jet->eta() - this->diPhoton()->subLeadingPhoton()->eta();
-            if( sqrt( dPhi * dPhi + dEta * dEta ) < _drJetPhoton ) { continue; }
+        // close to sublead photon?                                                                                                                                                                                                                       
+        dPhi = deltaPhi( jet->phi(), this->diPhoton()->subLeadingPhoton()->phi() );
+        dEta = jet->eta() - this->diPhoton()->subLeadingPhoton()->eta();
+        if( sqrt( dPhi * dPhi + dEta * dEta ) < _drJetPhoton ) { continue; }
 
-            // close to lepton1 (if any)                                                                                                                                                                                                         
-            dPhi = deltaPhi( jet->phi(), lepphi1 );
-            dEta = jet->eta() - lepeta1;
-            if( sqrt( dPhi * dPhi + dEta * dEta ) < _drJetLepton ) { continue; }
+        // close to lepton1 (if any)
+        dPhi = deltaPhi( jet->phi(), lepphi1 );
+        dEta = jet->eta() - lepeta1;
+        if( sqrt( dPhi * dPhi + dEta * dEta ) < _drJetLepton ) { continue; }
 
-            // close to lepton2 (if any)                                                                                                                                                                                                         
-            dPhi = deltaPhi( jet->phi(), lepphi2 );
-            dEta = jet->eta() - lepeta2;
-            if( sqrt( dPhi * dPhi + dEta * dEta ) < _drJetLepton ) { continue; }
+        // close to lepton2 (if any)
+        dPhi = deltaPhi( jet->phi(), lepphi2 );
+        dEta = jet->eta() - lepeta2;
+        if( sqrt( dPhi * dPhi + dEta * dEta ) < _drJetLepton ) { continue; }
 
-            nJ++;
+        nJ++;
 
-            if ( j0.isNull() ) {
-                //            std::cout << " Save jet " << i << " as j0" << std::endl;                                                                                                                                                           
-                j0 = jet;
-            } else if ( j1.isNull() ) {
-                //            std::cout << " Save jet " << i << " as j1" << std::endl;                                                                                                                                                           
-                j1 = jet;
-            } else {
-                //            std::cout << " Not saving jet " << i << " - two jets already " << std::endl;                                                                                                                                       
+        if ( j0.isNull() ) {
+            //            std::cout << " Save jet " << i << " as j0" << std::endl;
+            j0 = jet;
+        } else if ( j1.isNull() ) {
+            //            std::cout << " Save jet " << i << " as j1" << std::endl;
+            j1 = jet;
+        } else { 
+            //            std::cout << " Not saving jet " << i << " - two jets already " << std::endl;
+        }
+    }
+    //    std::cout << " nJ=" << nJ << " ptV=" << ptV << " ptH=" << ptH << std::endl;
+
+    unsigned nlep = 0;
+    if (lepphi1 > -998. ) nlep++;
+    if (lepphi2 > -998. ) nlep++;
+    string nlepstring = std::to_string(nlep)+"LEP";
+
+    if ( nJ >= 2 ) {
+        dEta = fabs( j0->eta() - j1->eta() );
+        mjj = ( j0->p4() + j1->p4() ).mass();
+        ptHjj = ( j0->p4() + j1->p4() + this->diPhoton()->p4() ).pt();
+        //        std::cout << " dEta=" << dEta << " mjj=" << mjj << " ptHjj=" << ptHjj << std::endl;
+    }
+    // have now added two categories for each RECO tag, using the moment diphoton MVA, with boundaries currently hard-coded below..
+    if ( ptV < -0.5 ) {
+        if (nJ == 0) {
+            if (mvaScore > 0.46) {
+                stage1recoTag_ = stage1recoTag::RECO_0J_Tag0;
             }
-        }
-        //    std::cout << " nJ=" << nJ << " ptV=" << ptV << " ptH=" << ptH << std::endl;                                                                                                                                                        
-
-        unsigned nlep = 0;
-        if (lepphi1 > -998. ) nlep++;
-        if (lepphi2 > -998. ) nlep++;
-        string nlepstring = std::to_string(nlep)+"LEP";
-
-        if ( nJ >= 2 ) {
-            dEta = fabs( j0->eta() - j1->eta() );
-            mjj = ( j0->p4() + j1->p4() ).mass();
-            ptHjj = ( j0->p4() + j1->p4() + this->diPhoton()->p4() ).pt();
-            //        std::cout << " dEta=" << dEta << " mjj=" << mjj << " ptHjj=" << ptHjj << std::endl;                                                                                                                                        
-        }
-        if ( ptV < -0.5 ) {
-            if (nJ == 0) {
-                stage1recoTag_ = stage1recoTag::RECO_0J;
-            } else if ( nJ == 1 ) {
-                if ( ptH > 200 ) {
+            else if (mvaScore > -0.2) {
+                stage1recoTag_ = stage1recoTag::RECO_0J_Tag1;
+            }
+            else { 
+                stage1recoTag_ = stage1recoTag::NOTAG;
+            }
+        } else if ( nJ == 1 ) {
+            if ( ptH > 200 ) {
+                if (mvaScore > 0.86) {
                     stage1recoTag_ = stage1recoTag::RECO_1J_PTH_GT200;
-                } else if ( ptH > 120. ) {
-                    stage1recoTag_ = stage1recoTag::RECO_1J_PTH_120_200;
-                } else if ( ptH > 60. ) {
-                    stage1recoTag_ = stage1recoTag::RECO_1J_PTH_60_120;
-                } else {
-                    stage1recoTag_ = stage1recoTag::RECO_1J_PTH_0_60;
                 }
-            } else { // 2 jets
-                if ( ptH > 200 ) {
-                    stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_GT200;
-                } else if ( mjj > 400. && dEta > 2.8 ) {
-                    if ( ptHjj < 25. ) {
-                        stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3VETO;
-                    } else {
-                        stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3;
-                    }
-                } else if ( mjj > 60. && mjj < 120. ) {
-                    stage1recoTag_ = stage1recoTag::RECO_VH2JET;
-                } else if ( ptH > 120. ) {
-                    stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_120_200;
-                } else if ( ptH > 60. ) {
-                    stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_60_120;
-                } else {
-                    stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_0_60;
+                else { 
+                    stage1recoTag_ = stage1recoTag::NOTAG;
                 }
-            }
-        } else { // Leptonic vector boson assigned                                                                                                                                                                                               
-            if ( ptV <  150. ) {
-                if(nlep == 0) stage1recoTag_ = stage1recoTag::RECO_0LEP_PTV_0_150;
-                else if(nlep == 1) stage1recoTag_ = stage1recoTag::RECO_1LEP_PTV_0_150;
-                else if(nlep == 2) stage1recoTag_ = stage1recoTag::RECO_2LEP_PTV_0_150;
-            } else if ( ptV < 250. ) {
-                if ( nJ >= 1 ) {
-                    if(nlep == 0) stage1recoTag_ = stage1recoTag::RECO_0LEP_PTV_150_250_GE1J;
-                    else if(nlep == 1) stage1recoTag_ = stage1recoTag::RECO_1LEP_PTV_150_250_GE1J;
-                    else if(nlep == 2) stage1recoTag_ = stage1recoTag::RECO_2LEP_PTV_150_250_GE1J;
-                } else {
-                    if(nlep == 0) stage1recoTag_ = stage1recoTag::RECO_0LEP_PTV_150_250_0J;
-                    else if(nlep == 1) stage1recoTag_ = stage1recoTag::RECO_1LEP_PTV_150_250_0J;
-                    else if(nlep == 2) stage1recoTag_ = stage1recoTag::RECO_2LEP_PTV_150_250_0J;
+            } else if ( ptH > 120. ) {
+                if (mvaScore > 0.8) {
+                    stage1recoTag_ = stage1recoTag::RECO_1J_PTH_120_200_Tag0;
+                }
+                else if (mvaScore > 0.4) {
+                    stage1recoTag_ = stage1recoTag::RECO_1J_PTH_120_200_Tag1;
+                }
+                else { 
+                    stage1recoTag_ = stage1recoTag::NOTAG;
+                }
+            } else if ( ptH > 60. ) {
+                if (mvaScore > 0.64) {
+                    stage1recoTag_ = stage1recoTag::RECO_1J_PTH_60_120_Tag0;
+                }
+                else if (mvaScore > 0.1) {
+                    stage1recoTag_ = stage1recoTag::RECO_1J_PTH_60_120_Tag1;
+                }
+                else { 
+                    stage1recoTag_ = stage1recoTag::NOTAG;
                 }
             } else {
-                if(nlep == 0) stage1recoTag_ = stage1recoTag::RECO_0LEP_PTV_GT250;
-                else if(nlep == 1) stage1recoTag_ = stage1recoTag::RECO_1LEP_PTV_GT250;
-                else if(nlep == 2) stage1recoTag_ = stage1recoTag::RECO_2LEP_PTV_GT250;
+                if (mvaScore > 0.56) {
+                    stage1recoTag_ = stage1recoTag::RECO_1J_PTH_0_60_Tag0;
+                }
+                else if (mvaScore > -0.05) {
+                    stage1recoTag_ = stage1recoTag::RECO_1J_PTH_0_60_Tag1;
+                }
+                else { 
+                    stage1recoTag_ = stage1recoTag::NOTAG;
+                }
+            }
+        } else { // 2 jets
+            if ( ptH > 200 ) {
+                if (mvaScore > 0.92) {
+                    stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_GT200_Tag0;
+                }
+                else if (mvaScore > 0.8) {
+                    stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_GT200_Tag1;
+                }
+                else { 
+                    stage1recoTag_ = stage1recoTag::NOTAG;
+                }
+            } else if ( mjj > 400. && dEta > 2.8 ) {
+                if ( ptHjj < 25. ) {
+                    if (mvaScore > 0.52) {
+                        stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3VETO_Tag0;
+                    }
+                    else if (mvaScore > 0.) {
+                        stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3VETO_Tag1;
+                    }
+                    else { 
+                        stage1recoTag_ = stage1recoTag::NOTAG;
+                    }
+                } else {
+                    if (mvaScore > 0.72) {
+                        stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3_Tag0;
+                    }
+                    else if (mvaScore > 0.3) {
+                        stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3_Tag1;
+                    }
+                    else { 
+                        stage1recoTag_ = stage1recoTag::NOTAG;
+                    }
+                }
+            } else if ( ptH > 120. ) {
+                if (mvaScore > 0.86) {
+                    stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_120_200_Tag0;
+                }
+                else if (mvaScore > 0.5) {
+                    stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_120_200_Tag1;
+                }
+                else { 
+                    stage1recoTag_ = stage1recoTag::NOTAG;
+                }
+            } else if ( ptH > 60. ) {
+                if (mvaScore > 0.75) {
+                    stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_60_120_Tag0;
+                }
+                else if (mvaScore > 0.3) {
+                    stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_60_120_Tag1;
+                }
+                else { 
+                    stage1recoTag_ = stage1recoTag::NOTAG;
+                }
+            } else {
+                if (mvaScore > 0.56) {
+                    stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_0_60_Tag0;
+                }
+                else if (mvaScore > -0.1) {
+                    stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_0_60_Tag1;
+                }
+                else { 
+                    stage1recoTag_ = stage1recoTag::NOTAG;
+                }
             }
         }
-        //    std::cout << " Final label " << stage1KinematicLabel_ << std::endl;                                                                                                                                                                
+    } else { // Leptonic vector boson assigned. Leave this up to existing VH tags for now
+        stage1recoTag_ = stage1recoTag::NOTAG;
     }
 }
 
 string StageOneTag::stage1KinematicLabel() const { 
-    enum stage1recoTag { LOGICERROR = -1, NOTAG = 0, RECO_0J, RECO_1J_PTH_0_60, RECO_1J_PTH_60_120, RECO_1J_PTH_120_200, RECO_1J_PTH_GT200,
-                         RECO_GE2J_PTH_0_60, RECO_GE2J_PTH_60_120, RECO_GE2J_PTH_120_200, RECO_GE2J_PTH_GT200, RECO_VBFTOPO_JET3VETO, RECO_VBFTOPO_JET3, RECO_VH2JET,
-                         RECO_0LEP_PTV_0_150, RECO_0LEP_PTV_150_250_0J, RECO_0LEP_PTV_150_250_GE1J, RECO_0LEP_PTV_GT250,
-                         RECO_1LEP_PTV_0_150, RECO_1LEP_PTV_150_250_0J, RECO_1LEP_PTV_150_250_GE1J, RECO_1LEP_PTV_GT250,
-                         RECO_2LEP_PTV_0_150, RECO_2LEP_PTV_150_250_0J, RECO_2LEP_PTV_150_250_GE1J, RECO_2LEP_PTV_GT250,
-                         RECO_TTH_LEP, RECO_TTH_HAD };
+    enum stage1recoTag { LOGICERROR = -1, NOTAG = 0, RECO_0J_Tag0, RECO_0J_Tag1, RECO_1J_PTH_0_60_Tag0, RECO_1J_PTH_0_60_Tag1, RECO_1J_PTH_60_120_Tag0, RECO_1J_PTH_60_120_Tag1,
+                         RECO_1J_PTH_120_200_Tag0, RECO_1J_PTH_120_200_Tag1, RECO_1J_PTH_GT200, 
+                         RECO_GE2J_PTH_0_60_Tag0, RECO_GE2J_PTH_0_60_Tag1, RECO_GE2J_PTH_60_120_Tag0, RECO_GE2J_PTH_60_120_Tag1, RECO_GE2J_PTH_120_200_Tag0, RECO_GE2J_PTH_120_200_Tag1, 
+                         RECO_GE2J_PTH_GT200_Tag0, RECO_GE2J_PTH_GT200_Tag1, RECO_VBFTOPO_JET3VETO_Tag0, RECO_VBFTOPO_JET3VETO_Tag1, RECO_VBFTOPO_JET3_Tag0, RECO_VBFTOPO_JET3_Tag1, 
+                         RECO_WHLEP, RECO_ZHLEP, RECO_VHLEPLOOSE, RECO_VHMET, RECO_VHHAD, RECO_TTH_LEP, RECO_TTH_HAD };
 
     switch(stage1recoTag_) {
     case stage1recoTag::LOGICERROR:
         return string("LOGICERROR");
     case stage1recoTag::NOTAG:
         return string("NOTAG");
-    case stage1recoTag::RECO_0J:
-        return string("RECO_0J");
-    case stage1recoTag::RECO_1J_PTH_0_60:
-        return string("RECO_1J_PTH_0_60");
-    case stage1recoTag::RECO_1J_PTH_60_120:
-        return string("RECO_1J_PTH_60_120");
-    case stage1recoTag::RECO_1J_PTH_120_200:
-        return string("RECO_1J_PTH_120_200");
+    case stage1recoTag::RECO_0J_Tag0:
+        return string("RECO_0J_Tag0");
+    case stage1recoTag::RECO_0J_Tag1:
+        return string("RECO_0J_Tag1");
+    case stage1recoTag::RECO_1J_PTH_0_60_Tag0:
+        return string("RECO_1J_PTH_0_60_Tag0");
+    case stage1recoTag::RECO_1J_PTH_0_60_Tag1:
+        return string("RECO_1J_PTH_0_60_Tag1");
+    case stage1recoTag::RECO_1J_PTH_60_120_Tag0:
+        return string("RECO_1J_PTH_60_120_Tag0");
+    case stage1recoTag::RECO_1J_PTH_60_120_Tag1:
+        return string("RECO_1J_PTH_60_120_Tag1");
+    case stage1recoTag::RECO_1J_PTH_120_200_Tag0:
+        return string("RECO_1J_PTH_120_200_Tag0");
+    case stage1recoTag::RECO_1J_PTH_120_200_Tag1:
+        return string("RECO_1J_PTH_120_200_Tag1");
     case stage1recoTag::RECO_1J_PTH_GT200:
         return string("RECO_1J_PTH_GT200");
-    case stage1recoTag::RECO_GE2J_PTH_0_60:
-        return string("RECO_GE2J_PTH_0_60");
-    case stage1recoTag::RECO_GE2J_PTH_60_120:
-        return string("RECO_GE2J_PTH_60_120");
-    case stage1recoTag::RECO_GE2J_PTH_120_200:
-        return string("RECO_GE2J_PTH_120_200");
-    case stage1recoTag::RECO_GE2J_PTH_GT200:
-        return string("RECO_GE2J_PTH_GT200");
-    case stage1recoTag::RECO_VBFTOPO_JET3VETO:
-        return string("RECO_VBFTOPO_JET3VETO");
-    case stage1recoTag::RECO_VBFTOPO_JET3:
-        return string("RECO_VBFTOPO_JET3");
-    case stage1recoTag::RECO_VH2JET:
-        return string("RECO_VH2JET");
-    case stage1recoTag::RECO_0LEP_PTV_0_150:
-        return string("RECO_0LEP_PTV_0_150");
-    case stage1recoTag::RECO_0LEP_PTV_150_250_0J:
-        return string("RECO_0LEP_PTV_150_250_0J");
-    case stage1recoTag::RECO_0LEP_PTV_150_250_GE1J:
-        return string("RECO_0LEP_PTV_150_250_GE1J");
-    case stage1recoTag::RECO_0LEP_PTV_GT250:
-        return string("RECO_0LEP_PTV_GT250");
-    case stage1recoTag::RECO_1LEP_PTV_0_150:
-        return string("RECO_1LEP_PTV_0_150");
-    case stage1recoTag::RECO_1LEP_PTV_150_250_0J:
-        return string("RECO_1LEP_PTV_150_250_0J");
-    case stage1recoTag::RECO_1LEP_PTV_150_250_GE1J:
-        return string("RECO_1LEP_PTV_150_250_GE1J");
-    case stage1recoTag::RECO_1LEP_PTV_GT250:
-        return string("RECO_1LEP_PTV_GT250");
-    case stage1recoTag::RECO_2LEP_PTV_0_150:
-        return string("RECO_2LEP_PTV_0_150");
-    case stage1recoTag::RECO_2LEP_PTV_150_250_0J:
-        return string("RECO_2LEP_PTV_150_250_0J");
-    case stage1recoTag::RECO_2LEP_PTV_150_250_GE1J:
-        return string("RECO_2LEP_PTV_150_250_GE1J");
-    case stage1recoTag::RECO_2LEP_PTV_GT250:
-        return string("RECO_2LEP_PTV_GT250");
+    case stage1recoTag::RECO_GE2J_PTH_0_60_Tag0:
+        return string("RECO_GE2J_PTH_0_60_Tag0");
+    case stage1recoTag::RECO_GE2J_PTH_0_60_Tag1:
+        return string("RECO_GE2J_PTH_0_60_Tag1");
+    case stage1recoTag::RECO_GE2J_PTH_60_120_Tag0:
+        return string("RECO_GE2J_PTH_60_120_Tag0");
+    case stage1recoTag::RECO_GE2J_PTH_60_120_Tag1:
+        return string("RECO_GE2J_PTH_60_120_Tag1");
+    case stage1recoTag::RECO_GE2J_PTH_120_200_Tag0:
+        return string("RECO_GE2J_PTH_120_200_Tag0");
+    case stage1recoTag::RECO_GE2J_PTH_120_200_Tag1:
+        return string("RECO_GE2J_PTH_120_200_Tag1");
+    case stage1recoTag::RECO_GE2J_PTH_GT200_Tag0:
+        return string("RECO_GE2J_PTH_GT200_Tag0");
+    case stage1recoTag::RECO_GE2J_PTH_GT200_Tag1:
+        return string("RECO_GE2J_PTH_GT200_Tag1");
+    case stage1recoTag::RECO_VBFTOPO_JET3VETO_Tag0:
+        return string("RECO_VBFTOPO_JET3VETO_Tag0");
+    case stage1recoTag::RECO_VBFTOPO_JET3VETO_Tag1:
+        return string("RECO_VBFTOPO_JET3VETO_Tag1");
+    case stage1recoTag::RECO_VBFTOPO_JET3_Tag0:
+        return string("RECO_VBFTOPO_JET3_Tag0");
+    case stage1recoTag::RECO_VBFTOPO_JET3_Tag1:
+        return string("RECO_VBFTOPO_JET3_Tag1");
+    case stage1recoTag::RECO_WHLEP:
+        return string("RECO_WHLEP");
+    case stage1recoTag::RECO_ZHLEP:
+        return string("RECO_ZHLEP");
+    case stage1recoTag::RECO_VHLEPLOOSE:
+        return string("RECO_VHLEPLOOSE");
+    case stage1recoTag::RECO_VHMET:
+        return string("RECO_VHMET");
+    case stage1recoTag::RECO_VHHAD:
+        return string("RECO_VHHAD");
     case stage1recoTag::RECO_TTH_LEP:
         return string("RECO_TTH_LEP");
     case stage1recoTag::RECO_TTH_HAD:

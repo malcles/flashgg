@@ -448,7 +448,8 @@ namespace flashgg {
                 float py = theMET->getCorPy() + lpy;
                 StageOneTag stage1tag_obj( dipho, mvares );
                 stage1tag_obj.setSystLabel( systLabel_ );
-                stage1tag_obj.computeStage1Kinematics( Jets[jetCollectionIndex], sqrt(px*px+py*py), leta, lphi );
+                stage1tag_obj.computeStage1Kinematics( Jets[jetCollectionIndex], sqrt(px*px+py*py), leta, lphi ); //FIXME only here bc needed to compile
+                stage1tag_obj.setStage1recoTag( flashgg::RECO_WHLEP );
                 stage1tags->push_back(stage1tag_obj);
 
                 whleptonictags->push_back( whleptonictags_obj );
