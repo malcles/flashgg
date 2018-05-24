@@ -339,8 +339,8 @@ namespace flashgg {
             tag_obj.setCategoryNumber( catnum );
 
             unsigned int jetCollectionIndex = diPhotons->ptrAt( candIndex )->jetCollectionIndex();
-            stage1tag_obj.computeStage1Kinematics( Jets[jetCollectionIndex] );
             stage1tag_obj.setCategoryNumber( catnum );
+            stage1tag_obj.computeStage1Kinematics( Jets[jetCollectionIndex] );
 
             unsigned int index_gp_leadjet = std::numeric_limits<unsigned int>::max();
             unsigned int index_gp_subleadjet = std::numeric_limits<unsigned int>::max();

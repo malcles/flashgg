@@ -41,6 +41,10 @@ void StageOneTag::computeStage1Kinematics( const edm::Handle<edm::View<flashgg::
     float mjj = 0.;
     float ptHjj = 0.;
     float mvaScore = this->diPhotonMVA().mvaValue();
+    int vbfCat = -1;
+    std::cout << "computing stage 1 kinematics, with combined BDT value = " << vbfDiPhoDiJet_mva_result_.VBFDiPhoDiJetMVAValue() << std::endl;
+    if ( this->VBFDiPhoDiJetMVA().VBFDiPhoDiJetMVAValue() > -1. ) vbfCat = this->categoryNumber();
+    std::cout << "which has VBF category number = " << vbfCat << std::endl << std::endl;
     edm::Ptr<flashgg::Jet> j0;
     edm::Ptr<flashgg::Jet> j1;
     for ( unsigned int i = 0 ; i < jets->size(); i++ ) {
@@ -167,23 +171,29 @@ void StageOneTag::computeStage1Kinematics( const edm::Handle<edm::View<flashgg::
                 else { 
                     stage1recoTag_ = stage1recoTag::NOTAG;
                 }
-            } else if ( mjj > 400. && dEta > 2.8 ) {
+            } else if ( mjj > 400. && dEta > 2.8 ) { //FIXME want this cut or not??
                 if ( ptHjj < 25. ) {
-                    if (mvaScore > 0.52) {
+                    if (vbfCat == 0) {
                         stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3VETO_Tag0;
                     }
-                    else if (mvaScore > 0.) {
+                    else if (vbfCat == 1) {
                         stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3VETO_Tag1;
+                    }
+                    else if (vbfCat == 2) {
+                        stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3VETO_Tag2;
                     }
                     else { 
                         stage1recoTag_ = stage1recoTag::NOTAG;
                     }
                 } else {
-                    if (mvaScore > 0.72) {
+                    if (vbfCat == 0) {
                         stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3_Tag0;
                     }
-                    else if (mvaScore > 0.3) {
+                    else if (vbfCat == 1) {
                         stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3_Tag1;
+                    }
+                    else if (vbfCat == 2) {
+                        stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3_Tag2;
                     }
                     else { 
                         stage1recoTag_ = stage1recoTag::NOTAG;
@@ -230,7 +240,8 @@ string StageOneTag::stage1KinematicLabel() const {
     enum stage1recoTag { LOGICERROR = -1, NOTAG = 0, RECO_0J_Tag0, RECO_0J_Tag1, RECO_1J_PTH_0_60_Tag0, RECO_1J_PTH_0_60_Tag1, RECO_1J_PTH_60_120_Tag0, RECO_1J_PTH_60_120_Tag1,
                          RECO_1J_PTH_120_200_Tag0, RECO_1J_PTH_120_200_Tag1, RECO_1J_PTH_GT200, 
                          RECO_GE2J_PTH_0_60_Tag0, RECO_GE2J_PTH_0_60_Tag1, RECO_GE2J_PTH_60_120_Tag0, RECO_GE2J_PTH_60_120_Tag1, RECO_GE2J_PTH_120_200_Tag0, RECO_GE2J_PTH_120_200_Tag1, 
-                         RECO_GE2J_PTH_GT200_Tag0, RECO_GE2J_PTH_GT200_Tag1, RECO_VBFTOPO_JET3VETO_Tag0, RECO_VBFTOPO_JET3VETO_Tag1, RECO_VBFTOPO_JET3_Tag0, RECO_VBFTOPO_JET3_Tag1, 
+                         RECO_GE2J_PTH_GT200_Tag0, RECO_GE2J_PTH_GT200_Tag1,
+                         RECO_VBFTOPO_JET3VETO_Tag0, RECO_VBFTOPO_JET3VETO_Tag1, RECO_VBFTOPO_JET3VETO_Tag2, RECO_VBFTOPO_JET3_Tag0, RECO_VBFTOPO_JET3_Tag1, RECO_VBFTOPO_JET3_Tag2, 
                          RECO_WHLEP, RECO_ZHLEP, RECO_VHLEPLOOSE, RECO_VHMET, RECO_VHHAD, RECO_TTH_LEP, RECO_TTH_HAD };
 
     switch(stage1recoTag_) {
@@ -276,10 +287,14 @@ string StageOneTag::stage1KinematicLabel() const {
         return string("RECO_VBFTOPO_JET3VETO_Tag0");
     case stage1recoTag::RECO_VBFTOPO_JET3VETO_Tag1:
         return string("RECO_VBFTOPO_JET3VETO_Tag1");
+    case stage1recoTag::RECO_VBFTOPO_JET3VETO_Tag2:
+        return string("RECO_VBFTOPO_JET3VETO_Tag2");
     case stage1recoTag::RECO_VBFTOPO_JET3_Tag0:
         return string("RECO_VBFTOPO_JET3_Tag0");
     case stage1recoTag::RECO_VBFTOPO_JET3_Tag1:
         return string("RECO_VBFTOPO_JET3_Tag1");
+    case stage1recoTag::RECO_VBFTOPO_JET3_Tag2:
+        return string("RECO_VBFTOPO_JET3_Tag2");
     case stage1recoTag::RECO_WHLEP:
         return string("RECO_WHLEP");
     case stage1recoTag::RECO_ZHLEP:
