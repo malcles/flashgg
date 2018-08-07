@@ -61,6 +61,14 @@ namespace flashgg {
         float dijet_centrality_j3;
         float dijet_centrality_g ;
 
+        // extra for stage 1 categorisation studies
+        float dijet_leadPUMVA;
+        float dijet_subleadPUMVA;
+        float dijet_leadDeltaPhi;
+        float dijet_subleadDeltaPhi;
+        float dijet_leadDeltaEta;
+        float dijet_subleadDeltaEta;
+
         
         float dipho_PToM;
         float leadPho_PToM;

@@ -33,3 +33,32 @@ systematicHistograms=["CMS_hgg_mass>>mass(160,100,180)"]
 
 systematicVariablesHTXS = systematicVariables+["stage0cat[72,9.5,81.5] := tagTruth().HTXSstage0cat"]
 systematicVariablesStage1 = systematicVariables+["stage1cat[39,-8.5,30.5] := tagTruth().HTXSstage1orderedBin"]
+
+jetStudyVariables = [
+                    #global variables
+                    "n_rec_jets := VBFMVA().n_rec_jets",
+                    "diphoptom  := VBFDiPhoDiJetMVA().dipho_PToM",
+                    "diphomva   := diPhotonMVA().result",
+                    #diphoton BDT inputs
+                    "leadmva     := diPhotonMVA().leadmva",
+                    "subleadmva  := diPhotonMVA().subleadmva",
+                    "leadptom    := diPhotonMVA().leadptom",
+                    "subleadptom := diPhotonMVA().subleadptom",
+                    "leadeta     := diPhotonMVA().leadeta",
+                    "subleadeta  := diPhotonMVA().subleadeta",
+                    "CosPhi      := diPhotonMVA().CosPhi",
+                    "vtxprob     := diPhotonMVA().vtxprob",
+                    #jet-related variables
+                    "VBFMVAValue           := VBFMVA().VBFMVAValue()",
+                    "dijet_Mjj             := VBFMVA().dijet_Mjj",
+                    "dijet_leadEta         := VBFMVA().dijet_leadEta",
+                    "dijet_subleadEta      := VBFMVA().dijet_subleadEta",
+                    "dijet_LeadJPt         := VBFMVA().dijet_LeadJPt",
+                    "dijet_SubJPt          := VBFMVA().dijet_SubJPt",
+                    "dijet_leadPUMVA       := VBFMVA().dijet_leadPUMVA",
+                    "dijet_subleadPUMVA    := VBFMVA().dijet_subleadPUMVA",
+                    "dijet_leadDeltaPhi    := VBFMVA().dijet_leadDeltaPhi",
+                    "dijet_subleadDeltaPhi := VBFMVA().dijet_subleadDeltaPhi",
+                    "dijet_leadDeltaEta    := VBFMVA().dijet_leadDeltaEta",
+                    "dijet_subleadDeltaEta := VBFMVA().dijet_subleadDeltaEta"
+                    ]

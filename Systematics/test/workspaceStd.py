@@ -5,6 +5,7 @@ import FWCore.Utilities.FileUtils as FileUtils
 import FWCore.ParameterSet.VarParsing as VarParsing
 from flashgg.Systematics.SystematicDumperDefaultVariables import minimalVariables,minimalHistograms,minimalNonSignalVariables,systematicVariables
 from flashgg.Systematics.SystematicDumperDefaultVariables import minimalVariablesHTXS,systematicVariablesHTXS,minimalVariablesStage1,systematicVariablesStage1
+from flashgg.Systematics.SystematicDumperDefaultVariables import jetStudyVariables
 import os
 
 # SYSTEMATICS SECTION
@@ -237,6 +238,8 @@ if customize.processId.count("h_") or customize.processId.count("vbf_") or custo
     print "Signal MC, so adding systematics and dZ"
     if customize.doStage1:
         variablesToUse = minimalVariablesStage1
+        #FIXME temp for jet studies
+        variablesToUse += jetStudyVariables
     elif customize.doHTXS:
         variablesToUse = minimalVariablesHTXS
     else:
@@ -308,6 +311,8 @@ if customize.processId.count("h_") or customize.processId.count("vbf_") or custo
 elif customize.processId == "Data":
     print "Data, so turn off all shifts and systematics, with some exceptions"
     variablesToUse = minimalNonSignalVariables
+    #FIXME temp for jet studies
+    variablesToUse += jetStudyVariables
     if customize.doFiducial:
         variablesToUse.extend(fc.getRecoVariables(True))
     customizeSystematicsForData(process)
@@ -393,6 +398,10 @@ if customize.doStage1:
   process.load("flashgg.Taggers.stage1diphotonTagDumper_cfi") #trying out stage 1 version
   process.tagsDumper.className = "Stage1DiPhotonTagDumper" 
   assert(not customize.doHTXS)
+  #FIXME temp for jet studies
+  process.flashggUntagged.Boundaries = cms.vdouble(-0.999,1.)
+  process.flashggVBFTag.Boundaries = cms.vdouble(-0.999,1.)
+  process.flashggVBFTag.RequireVBFPreselection = cms.bool(False)
 else:
   process.load("flashgg.Taggers.diphotonTagDumper_cfi") ##  import diphotonTagDumper 
   process.tagsDumper.className = "DiPhotonTagDumper"
@@ -506,6 +515,8 @@ for tag in tagList:
       if tagName.upper() == "NOTAG":
           if customize.doStage1:
               currentVariables = ["stage1cat[39,-8.5,30.5] := tagTruth().HTXSstage1orderedBin"]
+              #FIXME temp for jet studies
+              currentVariables += jetStudyVariables
           elif customize.doHTXS:
               currentVariables = ["stage0cat[72,9.5,81.5] := tagTruth().HTXSstage0cat"]
           else:
@@ -718,8 +729,7 @@ if customize.verboseSystDump:
 #print >> processDumpFile, process.dumpPython()
 
 # set default options if needed
-#customize.setDefault("maxEvents",1000)
-customize.setDefault("maxEvents",50)
+customize.setDefault("maxEvents",1000)
 customize.setDefault("targetLumi",1.00e+3)
 # call the customization
 customize(process)

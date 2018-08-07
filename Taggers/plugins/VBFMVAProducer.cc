@@ -77,6 +77,14 @@ namespace flashgg {
         float leadPho_PToM_;
         float sublPho_PToM_;
 
+        //FIXME temp for jet studies
+        float dijet_leadPUMVA_      ; 
+        float dijet_leadDeltaPhi_   ; 
+        float dijet_leadDeltaEta_   ; 
+        float dijet_subleadPUMVA_   ;
+        float dijet_subleadDeltaPhi_;
+        float dijet_subleadDeltaEta_;
+
     };
     
     VBFMVAProducer::VBFMVAProducer( const ParameterSet &iConfig ) :
@@ -120,6 +128,14 @@ namespace flashgg {
         dijet_dipho_pt_   = -999.;
         dijet_leady_      = -999.;
         dijet_subleady_   = -999.;
+
+        //FIXME temp again...
+        dijet_leadPUMVA_       = -999.; 
+        dijet_leadDeltaPhi_    = -999.; 
+        dijet_leadDeltaEta_    = -999.; 
+        dijet_subleadPUMVA_    = -999.;
+        dijet_subleadDeltaPhi_ = -999.;
+        dijet_subleadDeltaEta_ = -999.;
         
         if (_MVAMethod != ""){
             VbfMva_.reset( new TMVA::Reader( "!Color:Silent" ) );
@@ -168,6 +184,7 @@ namespace flashgg {
         }
         
         std::unique_ptr<vector<VBFMVAResult> > vbf_results( new vector<VBFMVAResult> );
+        std::cout << "ED DEBUG: inside VBF MVA producer" << std::endl;
         for( unsigned int candIndex = 0; candIndex < diPhotons->size() ; candIndex++ ) {
             
             flashgg::VBFMVAResult mvares;
@@ -194,6 +211,14 @@ namespace flashgg {
             dipho_PToM_       = -999.;
             leadPho_PToM_     = -999.;
             sublPho_PToM_     = -999.;
+
+            //FIXME temp for jet studies
+            dijet_leadPUMVA_       = -999.; 
+            dijet_leadDeltaPhi_    = -999.; 
+            dijet_leadDeltaEta_    = -999.; 
+            dijet_subleadPUMVA_    = -999.;
+            dijet_subleadDeltaPhi_ = -999.;
+            dijet_subleadDeltaEta_ = -999.;
            
  
             // First find dijet by looking for highest-pt jets...
@@ -214,7 +239,9 @@ namespace flashgg {
             // take the jets corresponding to the diphoton candidate
             unsigned int jetCollectionIndex = diPhotons->ptrAt( candIndex )->jetCollectionIndex();
                         
+            std::cout << "ED DEBUG: about to loop over jets" << std::endl;
             for( UInt_t jetLoop = 0; jetLoop < Jets[jetCollectionIndex]->size() ; jetLoop++ ) {
+                std::cout << "ED DEBUG: processing jet number " << jetLoop << " of total " << Jets[jetCollectionIndex]->size() << std::endl;
                 Ptr<flashgg::Jet> jet  = Jets[jetCollectionIndex]->ptrAt( jetLoop );
                 //if (jet->puJetId(diPhotons[candIndex]) <  PuIDCutoff) {continue;}
                 if( _usePuJetID && !jet->passesPuJetId(diPhotons->ptrAt( candIndex ))){ continue;}
@@ -312,6 +339,7 @@ namespace flashgg {
                 if( dijet_indices.first != -1 && dijet_indices.second != -1 ) {hasValidVBFDiJet  = 1;}
                 if( hasValidVBFDiJet          && jet_3_index != -1          ) {hasValidVBFTriJet = 1;}
             }
+            std::cout << "ED DEBUG: done loop over jets" << std::endl;
 
             //Third jet deltaR cut and merge index finding
             int indexToMergeWithJ3(-1);
@@ -410,10 +438,47 @@ namespace flashgg {
                 
                 mvares.leadJet_ptr    = Jets[jetCollectionIndex]->ptrAt( dijet_indices.first );
                 mvares.subleadJet_ptr = Jets[jetCollectionIndex]->ptrAt( dijet_indices.second );
+
                 //mvares.diphoton       = *diPhotons->ptrAt( candIndex );
+                
+                //FIXME added for new studies
+                dijet_leadPUMVA_       = Jets[jetCollectionIndex]->ptrAt( dijet_indices.first )->puJetIdMVA();
+                dijet_leadDeltaPhi_    = deltaPhi( Jets[jetCollectionIndex]->ptrAt( dijet_indices.first )->phi(), (diPhotonP4s[0]+diPhotonP4s[1]).phi());
+                dijet_leadDeltaEta_    = Jets[jetCollectionIndex]->ptrAt( dijet_indices.first )->eta() - (diPhotonP4s[0]+diPhotonP4s[1]).eta();
+                dijet_subleadPUMVA_    = Jets[jetCollectionIndex]->ptrAt( dijet_indices.second )->puJetIdMVA();
+                dijet_subleadDeltaPhi_ = deltaPhi( Jets[jetCollectionIndex]->ptrAt( dijet_indices.second )->phi(), (diPhotonP4s[0]+diPhotonP4s[1]).phi());
+                dijet_subleadDeltaEta_ = Jets[jetCollectionIndex]->ptrAt( dijet_indices.second )->eta() - (diPhotonP4s[0]+diPhotonP4s[1]).eta();
+
+                //std::cout << "ED DEBUG: lead dijet index       = " << dijet_indices.first << std::endl;
+                //std::cout << "ED DEBUG: sublead dijet index    = " << dijet_indices.second << std::endl;
+                //std::cout << "ED DEBUG: lead jet puJetIdMVA    = " << Jets[jetCollectionIndex]->ptrAt( dijet_indices.first )->puJetIdMVA() << std::endl;
+                //std::cout << "ED DEBUG: lead jet phi           = " << Jets[jetCollectionIndex]->ptrAt( dijet_indices.first )->phi() << std::endl;
+                //std::cout << "ED DEBUG: diphoton phi           = " << (diPhotonP4s[0]+diPhotonP4s[1]).phi() << std::endl;
+                //std::cout << "ED DEBUG: lead deltaPhi          = " << dijet_leadDeltaPhi_ << std::endl;
+                //std::cout << "ED DEBUG: lead jet eta           = " << Jets[jetCollectionIndex]->ptrAt( dijet_indices.first )->eta() << std::endl;
+                //std::cout << "ED DEBUG: diphoton eta           = " << (diPhotonP4s[0]+diPhotonP4s[1]).eta() << std::endl;
+                //std::cout << "ED DEBUG: lead deltaEta          = " << dijet_leadDeltaEta_ << std::endl;
+                //std::cout << "ED DEBUG: sublead jet puJetIdMVA = " << Jets[jetCollectionIndex]->ptrAt( dijet_indices.second )->puJetIdMVA() << std::endl;
+                //std::cout << "ED DEBUG: sublead jet phi        = " << Jets[jetCollectionIndex]->ptrAt( dijet_indices.second )->phi() << std::endl;
+                //std::cout << "ED DEBUG: diphoton phi           = " << (diPhotonP4s[0]+diPhotonP4s[1]).phi() << std::endl;
+                //std::cout << "ED DEBUG: sublead deltaPhi       = " << dijet_subleadDeltaPhi_ << std::endl;
+                //std::cout << "ED DEBUG: sublead jet eta        = " << Jets[jetCollectionIndex]->ptrAt( dijet_indices.second )->eta() << std::endl;
+                //std::cout << "ED DEBUG: diphoton eta           = " << (diPhotonP4s[0]+diPhotonP4s[1]).eta() << std::endl;
+                //std::cout << "ED DEBUG: sublead deltaEta       = " << dijet_subleadDeltaEta_ << std::endl;
+
             }else{
-                mvares.leadJet_ptr    = edm::Ptr<flashgg::Jet>();
-                mvares.subleadJet_ptr = edm::Ptr<flashgg::Jet>();
+                std::cout << "ED DEBUG: event does not have a dijet, but should still be processed here..." << std::endl;
+                // FIXME can change this to add more info in cases without valid dijet
+                //mvares.leadJet_ptr    = edm::Ptr<flashgg::Jet>();
+                //mvares.subleadJet_ptr = edm::Ptr<flashgg::Jet>();
+                if( dijet_indices.first != -1 ) {
+                    dijet_leadEta_         = Jets[jetCollectionIndex]->ptrAt( dijet_indices.first )->eta();
+                    dijet_LeadJPt_         = Jets[jetCollectionIndex]->ptrAt( dijet_indices.first )->pt();
+                    dijet_leadPUMVA_       = Jets[jetCollectionIndex]->ptrAt( dijet_indices.first )->puJetIdMVA();
+                    dijet_leadDeltaPhi_    = deltaPhi( Jets[jetCollectionIndex]->ptrAt( dijet_indices.first )->phi(), (diPhotonP4s[0]+diPhotonP4s[1]).phi());
+                    dijet_leadDeltaEta_    = Jets[jetCollectionIndex]->ptrAt( dijet_indices.first )->eta() - (diPhotonP4s[0]+diPhotonP4s[1]).eta();
+                }
+
             }
             
             if ( hasValidVBFDiJet && hasValidVBFTriJet){
@@ -431,6 +496,7 @@ namespace flashgg {
                 //mvares.vbfMvaResult_value = VbfMva_->GetProba( _MVAMethod.c_str() );
             }
             
+            mvares.n_rec_jets        = n_jets_count;
             mvares.dijet_leadEta     = dijet_leadEta_ ;
             mvares.dijet_subleadEta  = dijet_subleadEta_ ;
             mvares.dijet_abs_dEta    = dijet_abs_dEta_ ;
@@ -452,10 +518,34 @@ namespace flashgg {
             mvares.dijet_dipho_pt    = dijet_dipho_pt_ ;
             mvares.dijet_leady       = dijet_leady_   ;
             mvares.dijet_subleady    = dijet_subleady_;
+
+            //FIXME temp for jet studies
+            mvares.dijet_leadPUMVA       = dijet_leadPUMVA_;
+            mvares.dijet_leadDeltaPhi    = dijet_leadDeltaPhi_;
+            mvares.dijet_leadDeltaEta    = dijet_leadDeltaEta_;
+            mvares.dijet_subleadPUMVA    = dijet_subleadPUMVA_;
+            mvares.dijet_subleadDeltaPhi = dijet_subleadDeltaPhi_;
+            mvares.dijet_subleadDeltaEta = dijet_subleadDeltaEta_;
             
+            std::cout << "ED DEBUG: appending VBF MVA reslut" << std::endl;
+            std::cout << "ED DEBUG: the number of reco jets is " << n_jets_count << " / " << mvares.n_rec_jets << std::endl;
             vbf_results->push_back( mvares );
+
+            std::cout << "ED DEBUG: lead dijet index       = " << dijet_indices.first << std::endl;
+            std::cout << "ED DEBUG: sublead dijet index    = " << dijet_indices.second << std::endl;
+            std::cout << "ED DEBUG: dijet_leadEta_         = " << dijet_leadEta_ << std::endl;
+            std::cout << "ED DEBUG: dijet_LeadJPt_         = " << dijet_LeadJPt_ << std::endl;
+            std::cout << "ED DEBUG: dijet_leadPUMVA_       = " << dijet_leadPUMVA_ << std::endl;
+            std::cout << "ED DEBUG: dijet_leadDeltaPhi_    = " << dijet_leadDeltaPhi_ << std::endl;
+            std::cout << "ED DEBUG: dijet_leadDeltaEta_    = " << dijet_leadDeltaEta_ << std::endl;
+            std::cout << "ED DEBUG: dijet_subleadEta_         = " << dijet_subleadEta_ << std::endl;
+            std::cout << "ED DEBUG: dijet_SubJPt_         = " << dijet_SubJPt_ << std::endl;
+            std::cout << "ED DEBUG: dijet_subleadPUMVA_       = " << dijet_subleadPUMVA_ << std::endl;
+            std::cout << "ED DEBUG: dijet_subleadDeltaPhi_    = " << dijet_subleadDeltaPhi_ << std::endl;
+            std::cout << "ED DEBUG: dijet_subleadDeltaEta_    = " << dijet_subleadDeltaEta_ << std::endl;
         }
         evt.put( std::move( vbf_results ) );
+        std::cout << "ED DEBUG: exiting VBF MVA producer" << std::endl;
     }
 }
 

@@ -5,6 +5,7 @@ import FWCore.Utilities.FileUtils as FileUtils
 import FWCore.ParameterSet.VarParsing as VarParsing
 import os
 from flashgg.Systematics.SystematicDumperDefaultVariables import minimalVariables,minimalHistograms,minimalNonSignalVariables,systematicVariables
+from flashgg.Systematics.SystematicDumperDefaultVariables import jetStudyVariables,minimalVariablesStage1
 
 # ========================================================================
 # SYSTEMATICS SECTION
@@ -286,29 +287,13 @@ cloneTagSequenceForEachSystematic(process,
                                   ZPlusJetMode=2)
 
 
+#all_variables = var.dipho_variables + var.dijet_variables +  new_variables 
+all_variables = minimalVariablesStage1 + jetStudyVariables
 
-#jet_syst_weights = [
-#    "UnmatchedPUWeightUp01sigma := weight(\"UnmatchedPUWeightUp01sigma\")",
-#    "centralObjectWeight := centralWeight",
-#    "UnmatchedPUWeightDown01sigma := weight(\"UnmatchedPUWeightDown01sigma\")" ,
-#    "alphaUp := alphaUp",
-#    "alphaDown := alphaDown",
-#]
-
-
-#for i in range(3):
-#    jet_syst_weights += ["scaleUp_%i := scaleUp(%i)" % (i,i),"scaleDown_%i := scaleDown(%i)" % (i,i)]
-
-#for i in range(4):
-#    jet_syst_weights += ["jetVetoUp_%i := JetVetoUp(%i)" % (i,i),"jetVetoDown_%i := JetVetoDown(%i)" % (i,i)]
-    
-#for i in range(60):
-#    jet_syst_weights +=["pdf_%i := pdf(%i)" % (i,i)]
-
-all_variables = var.dipho_variables + var.dijet_variables +  new_variables 
 if customize.processId != "Data":
-    all_variables += matching_photon# + jet_syst_weights
-    all_variables += var.stxs_truth_variables
+    pass
+    #all_variables += matching_photon# + jet_syst_weights
+    #all_variables += var.stxs_truth_variables
 
 cats = []
 
