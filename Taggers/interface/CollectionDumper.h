@@ -511,7 +511,17 @@ namespace flashgg {
         } else {
             event.getByLabel(stage1catTag_, stage1cat);
         }
-        return (*(stage1cat.product() ) );
+        if ( stage1cat.isValid() ) {
+            return (*(stage1cat.product() ) );
+        } else {
+            edm::Handle<HTXS::HiggsClassification> htxsClassification;
+            if (fullEvent != 0) {
+                fullEvent->getByToken(newHTXSToken_,htxsClassification);
+            } else {
+                event.getByLabel(newHTXSTag_,htxsClassification);
+            }
+            return( htxsClassification->stage1_cat_pTjet30GeV );
+        }
     }
 
     template<class C, class T, class U>

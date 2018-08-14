@@ -137,10 +137,6 @@ void TagTruthBase::setggHweights( int njets, float pTH, int stage1cat )
     ggHweights_["THU_ggH_PT60Down01sigma"]  = theWeightsDown[6];
     ggHweights_["THU_ggH_PT120Down01sigma"] = theWeightsDown[7];
     ggHweights_["THU_ggH_qmtopDown01sigma"] = theWeightsDown[8];
-
-    // quick test
-    //std::cout << "ED DEBUG: " << HTXSggHweight("THU_ggH_MuUp01sigma") << std::endl;
-    //std::cout << "ED DEBUG: " << HTXSggHweight("nonsense") << std::endl;
 }
 
 float TagTruthBase::HTXSggHweight( std::string weightName ) const {
