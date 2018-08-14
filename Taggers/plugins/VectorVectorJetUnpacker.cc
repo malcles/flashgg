@@ -55,13 +55,14 @@ namespace flashgg {
         evt.getByToken( jetsToken_, theJets );
 
         if( theJets->size() > nCollections_ ) {
-            throw cms::Exception( "Configuration" ) << " Too many collections in input vector - inconsistency with MicroAOD";
+            throw cms::Exception( "Configuration" ) << " Too many collections in input vector (" << nCollections_ << ") - inconsistency with MicroAOD (" << theJets->size() << ")";
         }
 
         for( unsigned int i = 0 ; i < nCollections_ ; i++ ) {
             unique_ptr<vector<Jet> > result( new vector<Jet> );
             if( theJets->size() > i ) {
                 for( unsigned int j = 0 ; j < theJets->at( i ).size() ; j++ ) {
+                    std::cout << "entering the jth jet corresponding to collection i;  i,j = " << i << "," << j << std::endl;
                     result->push_back( theJets->at( i )[j] );
                 }
             }

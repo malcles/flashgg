@@ -156,40 +156,56 @@ namespace flashgg {
 
     void ZHLeptonicTagProducer::produce( Event &evt, const EventSetup & )
     {
+        std::cout << "ED DEBUG: inside ZHLeptonic produce" << std::endl;
 
         Handle<int> stage0cat, stage1cat, njets;
         Handle<float> pTH, pTV;
         evt.getByToken(stage0catToken_, stage0cat);
+        std::cout << "ED DEBUG: stage0catToken_ done" << std::endl;
         evt.getByToken(stage1catToken_,stage1cat);
+        std::cout << "ED DEBUG: stage1catToken_ done" << std::endl;
         evt.getByToken(njetsToken_,njets);
+        std::cout << "ED DEBUG: njetsToken_ done" << std::endl;
         evt.getByToken(pTHToken_,pTH);
+        std::cout << "ED DEBUG: pTHToken_ done" << std::endl;
         evt.getByToken(pTVToken_,pTV);
+        std::cout << "ED DEBUG: pTVToken_ done" << std::endl;
 
         Handle<HTXS::HiggsClassification> htxsClassification;
         evt.getByToken(newHTXSToken_,htxsClassification);
+        std::cout << "ED DEBUG: newHTXSToken_ done" << std::endl;
         
         Handle<View<flashgg::DiPhotonCandidate> > diPhotons;
         evt.getByToken( diPhotonToken_, diPhotons );
+        std::cout << "ED DEBUG:  diPhotonToken_ done" << std::endl;
 
         Handle<View<flashgg::Muon> > theMuons;
         evt.getByToken( muonToken_, theMuons );
+        std::cout << "ED DEBUG:  muonToken_ done" << std::endl;
 
         Handle<View<flashgg::Electron> > theElectrons;
         evt.getByToken( electronToken_, theElectrons );
+        std::cout << "ED DEBUG:  electronToken_ done" << std::endl;
 
         JetCollectionVector Jets( inputTagJets_.size() );
         for( size_t j = 0; j < inputTagJets_.size(); ++j ) {
+            std::cout << "ED DEBUG: on jet " << j << " of total " << inputTagJets_.size() << std::endl;
             evt.getByToken( tokenJets_[j], Jets[j] );
         }
+        std::cout << "ED DEBUG: tokenJets_ done" << std::endl;
 
         edm::Handle<double>  rho;
         evt.getByToken(rhoTag_,rho);
+        std::cout << "ED DEBUG: rhoTag_ done" << std::endl;
         double rho_    = *rho;
 
         Handle<View<flashgg::DiPhotonMVAResult> > mvaResults;
         evt.getByToken( mvaResultToken_, mvaResults );
+        std::cout << "ED DEBUG:  mvaResultToken_ done" << std::endl;
 
         Handle<View<reco::GenParticle> > genParticles;
+ 
+        std::cout << "ED DEBUG: done the get by token stuff" << std::endl;
 
         std::unique_ptr<vector<ZHLeptonicTag> > ZHLeptonicTags( new vector<ZHLeptonicTag> );
         std::unique_ptr<vector<VHTagTruth> > truths( new vector<VHTagTruth> );
@@ -206,6 +222,7 @@ namespace flashgg {
         bool VhasMissingLeptons=0;
         float Vpt=0;
         
+        std::cout << "ED DEBUG: about to enter gen particle loop" << std::endl;
         if( ! evt.isRealData() )
             {
                 evt.getByToken( genParticleToken_, genParticles );
@@ -269,6 +286,7 @@ namespace flashgg {
         double idmva2 = 0.;
         bool isDiMuon = false;
         bool isDiElectron = false;
+        std::cout << "ED DEBUG: about to loop over the diphotons" << std::endl;
         for( unsigned int diphoIndex = 0; diphoIndex < diPhotons->size(); diphoIndex++ ) {
 
             if(useVertex0only_)
@@ -391,9 +409,11 @@ namespace flashgg {
                 }
             }
         }
+        std::cout << "ED DEBUG: done that loop, now putting stuff in the event" << std::endl;
         evt.put( std::move( ZHLeptonicTags ) );
         evt.put( std::move( truths ) );
         evt.put( std::move( stage1tags ), "stageone" );
+        std::cout << "ED DEBUG: exiting the ZH leptonic produce function" << std::endl;
     }
 }
 typedef flashgg::ZHLeptonicTagProducer FlashggZHLeptonicTagProducer;

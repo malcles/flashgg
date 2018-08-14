@@ -207,13 +207,10 @@ namespace flashgg {
         dumpGlobalVariables_( cfg.getUntrackedParameter<bool>( "dumpGlobalVariables", true ) ),
         stage0catTag_( cfg.getUntrackedParameter<edm::InputTag>( "stage0catTag", edm::InputTag("rivetProducerHTXS","stage0cat") ) ),
         stage0catToken_( cc.consumes<int>( stage0catTag_ ) ),
-<<<<<<< HEAD
         newHTXSTag_( cfg.getUntrackedParameter<edm::InputTag>( "classificationObj", edm::InputTag("rivetProducerHTXS","HiggsClassification") ) ),
         newHTXSToken_( cc.consumes<HTXS::HiggsClassification>( newHTXSTag_ ) ),
-=======
         stage1catTag_( cfg.getUntrackedParameter<edm::InputTag>( "stage1catTag", edm::InputTag("rivetProducerHTXS","stage1cat") ) ),
         stage1catToken_( cc.consumes<int>( stage1catTag_ ) ),
->>>>>>> debugging messages, fix one crash by splitting pdfs by stage1 when appropriate
         stxsNJetTag_( cfg.getUntrackedParameter<edm::InputTag>( "stxsNJetTag", edm::InputTag("rivetProducerHTXS","njets") ) ),
         stxsNJetToken_( cc.consumes<int>( stxsNJetTag_  ) ),
         stxsPtHTag_( cfg.getUntrackedParameter<edm::InputTag>( "stxsPtHTag", edm::InputTag("rivetProducerHTXS","pTH") ) ),

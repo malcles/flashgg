@@ -63,6 +63,7 @@
  <version ClassVersion="0" checksum="1176077673"/>
 </class>
 <class name="std::vector<flashgg::StageOneTag>"/>
+<class name="std::vector<flashgg::StageOneTag*>"/>
 <class name="edm::Wrapper<std::vector<flashgg::StageOneTag> >"/>
 <class name="std::vector<flashgg::SigmaMpTTag>"/>
 <class name="edm::Wrapper<std::vector<flashgg::SigmaMpTTag> >"/>
@@ -79,7 +80,8 @@
 </class>
 <class name="std::vector<flashgg::VBFTag>"/>
 <class name="edm::Wrapper<std::vector<flashgg::VBFTag> >"/>
-<class name="flashgg::TTHLeptonicTag" ClassVersion="16">
+<class name="flashgg::TTHLeptonicTag" ClassVersion="17">
+ <version ClassVersion="17" checksum="85194279"/>
  <version ClassVersion="16" checksum="1508141446"/>
  <version ClassVersion="15" checksum="3747537472"/>
  <version ClassVersion="14" checksum="3252840468"/>
@@ -91,7 +93,8 @@
 <class name="std::vector<flashgg::TTHLeptonicTag>"/>
 <class name="edm::Wrapper<std::vector<flashgg::TTHLeptonicTag> >"/>
 <class name="std::vector<pat::Muon>"/>
-<class name="flashgg::TTHDiLeptonTag" ClassVersion="14">
+<class name="flashgg::TTHDiLeptonTag" ClassVersion="15">
+ <version ClassVersion="15" checksum="3623745764"/>
  <version ClassVersion="14" checksum="4003252239"/>
  <version ClassVersion="13" checksum="3773849427"/>
  <version ClassVersion="12" checksum="2341601757"/>
@@ -99,7 +102,8 @@
 <class name="std::vector<flashgg::TTHDiLeptonTag>"/>
 <class name="edm::Wrapper<std::vector<flashgg::TTHDiLeptonTag> >"/>
 <class name="edm::Ptr<reco::GenParticle>"/>
-<class name="flashgg::TTHHadronicTag" ClassVersion="18">
+<class name="flashgg::TTHHadronicTag" ClassVersion="19">
+ <version ClassVersion="19" checksum="1639783053"/>
  <version ClassVersion="18" checksum="4120225099"/>
  <version ClassVersion="17" checksum="3937233577"/>
  <version ClassVersion="16" checksum="2479971496"/>
