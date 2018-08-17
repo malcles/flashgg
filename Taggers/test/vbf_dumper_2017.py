@@ -287,13 +287,12 @@ cloneTagSequenceForEachSystematic(process,
                                   ZPlusJetMode=2)
 
 
-#all_variables = var.dipho_variables + var.dijet_variables +  new_variables 
-all_variables = minimalVariablesStage1 + jetStudyVariables
+all_variables = jetStudyVariables
 
 if customize.processId != "Data":
-    pass
-    #all_variables += matching_photon# + jet_syst_weights
-    #all_variables += var.stxs_truth_variables
+    all_variables += minimalVariablesStage1
+else:
+    all_variables += minimalNonSignalVariables
 
 cats = []
 
@@ -315,7 +314,8 @@ process.vbfTagDumper.nameTemplate = "$PROCESS_$SQRTS_$CLASSNAME_$SUBCAT_$LABEL"
 from HLTrigger.HLTfilters.hltHighLevel_cfi import hltHighLevel
 if customize.runOnZee:
     if customize.processId == "Data":
-        process.hltHighLevel = hltHighLevel.clone(HLTPaths = cms.vstring("HLT_Ele32_WPTight_Gsf_L1DoubleEG_v**") )
+        #process.hltHighLevel = hltHighLevel.clone(HLTPaths = cms.vstring("HLT_Ele32_WPTight_Gsf_L1DoubleEG_v**") )
+        process.hltHighLevel = hltHighLevel.clone(HLTPaths = cms.vstring("HLT_Ele27_WPTight_Gsf_v*") )
 else:
     process.hltHighLevel = hltHighLevel.clone(HLTPaths = cms.vstring("HLT_Diphoton30_18_R9Id_OR_IsoCaloId_AND_HE_R9Id_Mass90_v*"))
 
