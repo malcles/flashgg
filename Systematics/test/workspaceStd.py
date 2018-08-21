@@ -239,7 +239,7 @@ if customize.processId.count("h_") or customize.processId.count("vbf_") or custo
     if customize.doStage1:
         variablesToUse = minimalVariablesStage1
         #FIXME temp for jet studies
-        variablesToUse += jetStudyVariables
+        #variablesToUse += jetStudyVariables
     elif customize.doHTXS:
         variablesToUse = minimalVariablesHTXS
     else:
@@ -312,7 +312,7 @@ elif customize.processId == "Data":
     print "Data, so turn off all shifts and systematics, with some exceptions"
     variablesToUse = minimalNonSignalVariables
     #FIXME temp for jet studies
-    variablesToUse += jetStudyVariables
+    #variablesToUse += jetStudyVariables
     if customize.doFiducial:
         variablesToUse.extend(fc.getRecoVariables(True))
     customizeSystematicsForData(process)
@@ -399,9 +399,9 @@ if customize.doStage1:
   process.tagsDumper.className = "Stage1DiPhotonTagDumper" 
   assert(not customize.doHTXS)
   #FIXME temp for jet studies
-  process.flashggUntagged.Boundaries = cms.vdouble(-0.999,1.)
-  process.flashggVBFTag.Boundaries = cms.vdouble(-0.999,1.)
-  process.flashggVBFTag.RequireVBFPreselection = cms.bool(False)
+  #process.flashggUntagged.Boundaries = cms.vdouble(-0.999,1.)
+  #process.flashggVBFTag.Boundaries = cms.vdouble(-0.999,1.)
+  #process.flashggVBFTag.RequireVBFPreselection = cms.bool(False)
 else:
   process.load("flashgg.Taggers.diphotonTagDumper_cfi") ##  import diphotonTagDumper 
   process.tagsDumper.className = "DiPhotonTagDumper"
@@ -516,7 +516,7 @@ for tag in tagList:
           if customize.doStage1:
               currentVariables = ["stage1cat[39,-8.5,30.5] := tagTruth().HTXSstage1orderedBin"]
               #FIXME temp for jet studies
-              currentVariables += jetStudyVariables
+              #currentVariables += jetStudyVariables
           elif customize.doHTXS:
               currentVariables = ["stage0cat[72,9.5,81.5] := tagTruth().HTXSstage0cat"]
           else:

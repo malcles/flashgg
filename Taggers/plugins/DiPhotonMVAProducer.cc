@@ -122,17 +122,16 @@ namespace flashgg {
         if( version_new.compare( Version_ ) == 0 ) {
             //            std::cout << "Reading MVA variables " << std::endl;
             DiphotonMva_.reset( new TMVA::Reader( "!Color:Silent" ) );
-            DiphotonMva_->AddVariable( "leadptom", &leadptom_ );
-            DiphotonMva_->AddVariable( "subleadptom", &subleadptom_ );
             DiphotonMva_->AddVariable( "leadmva", &leadmva_ );
             DiphotonMva_->AddVariable( "subleadmva", &subleadmva_ );
+            DiphotonMva_->AddVariable( "leadptom", &leadptom_ );
+            DiphotonMva_->AddVariable( "subleadptom", &subleadptom_ );
             DiphotonMva_->AddVariable( "leadeta", &leadeta_ );
             DiphotonMva_->AddVariable( "subleadeta", &subleadeta_ );
-            DiphotonMva_->AddVariable( "sigmarv", &sigmarv_ );
-            DiphotonMva_->AddVariable( "sigmawv", &sigmawv_ );
             DiphotonMva_->AddVariable( "CosPhi", &CosPhi_ );
             DiphotonMva_->AddVariable( "vtxprob", &vtxprob_ );
-
+            DiphotonMva_->AddVariable( "sigmarv", &sigmarv_ );
+            DiphotonMva_->AddVariable( "sigmawv", &sigmawv_ );
             //            DiphotonMva_->AddSpectator("sigmarv_decorr", &sigmarv_decorr_       );
             //            DiphotonMva_->AddSpectator("Background_wei", &weightBkg_           );            
             DiphotonMva_->BookMVA( "BDT", diphotonMVAweightfile_.fullPath() );
