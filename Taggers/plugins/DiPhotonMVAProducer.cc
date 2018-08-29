@@ -40,7 +40,9 @@ namespace flashgg {
         double BeamSig_fromConf_=-1.;
 
         unique_ptr<TMVA::Reader>DiphotonMva_;
+        unique_ptr<TMVA::Reader>XgbDiphotonMva_;
         FileInPath diphotonMVAweightfile_;
+        FileInPath xgbDiphotonMVAweightfile_;
         FileInPath sigmaMdecorrFile_;
 
         TH2D* h_decorrEBEB_;
@@ -79,6 +81,7 @@ namespace flashgg {
         vertex_prob_params_noConv = iConfig.getParameter<vector<double>>( "VertexProbParamsNoConv" );
         BeamSig_fromConf_ = iConfig.getParameter<double>( "BeamSpotSigma" );
         diphotonMVAweightfile_ = iConfig.getParameter<edm::FileInPath>( "diphotonMVAweightfile" );
+        xgbDiphotonMVAweightfile_ = iConfig.getParameter<edm::FileInPath>( "xgbDiphotonMVAweightfile" );
         sigmaMdecorrFile_ = iConfig.getParameter<edm::FileInPath>( "sigmaMdecorrFile" );
         doDecorr_ = iConfig.getParameter<bool>( "doSigmaMdecorr" );
 
@@ -117,25 +120,49 @@ namespace flashgg {
             DiphotonMva_->AddVariable( "ph2.idmva", &subleadmva_ );
             DiphotonMva_->BookMVA( "BDT", diphotonMVAweightfile_.fullPath() );
             //            std::cout << "finished reading mva" << std::endl;
+            XgbDiphotonMva_.reset( new TMVA::Reader( "!Color:Silent" ) );
+            XgbDiphotonMva_->AddVariable( "masserrsmeared/mass", &sigmarv_ );
+            XgbDiphotonMva_->AddVariable( "masserrsmearedwrongvtx/mass", &sigmawv_ );
+            XgbDiphotonMva_->AddVariable( "vtxprob", &vtxprob_ );
+            XgbDiphotonMva_->AddVariable( "ph1.pt/mass", &leadptom_ );
+            XgbDiphotonMva_->AddVariable( "ph2.pt/mass", &subleadptom_ );
+            XgbDiphotonMva_->AddVariable( "ph1.eta", &leadeta_ );
+            XgbDiphotonMva_->AddVariable( "ph2.eta", &subleadeta_ );
+            XgbDiphotonMva_->AddVariable( "TMath::Cos(ph1.phi-ph2.phi)", &CosPhi_ );
+            XgbDiphotonMva_->AddVariable( "ph1.idmva", &leadmva_ );
+            XgbDiphotonMva_->AddVariable( "ph2.idmva", &subleadmva_ );
+            XgbDiphotonMva_->BookMVA( "BDT", xgbDiphotonMVAweightfile_.fullPath() );
         }
 
         if( version_new.compare( Version_ ) == 0 ) {
             //            std::cout << "Reading MVA variables " << std::endl;
             DiphotonMva_.reset( new TMVA::Reader( "!Color:Silent" ) );
-            DiphotonMva_->AddVariable( "leadmva", &leadmva_ );
-            DiphotonMva_->AddVariable( "subleadmva", &subleadmva_ );
             DiphotonMva_->AddVariable( "leadptom", &leadptom_ );
             DiphotonMva_->AddVariable( "subleadptom", &subleadptom_ );
+            DiphotonMva_->AddVariable( "leadmva", &leadmva_ );
+            DiphotonMva_->AddVariable( "subleadmva", &subleadmva_ );
             DiphotonMva_->AddVariable( "leadeta", &leadeta_ );
             DiphotonMva_->AddVariable( "subleadeta", &subleadeta_ );
-            DiphotonMva_->AddVariable( "CosPhi", &CosPhi_ );
-            DiphotonMva_->AddVariable( "vtxprob", &vtxprob_ );
             DiphotonMva_->AddVariable( "sigmarv", &sigmarv_ );
             DiphotonMva_->AddVariable( "sigmawv", &sigmawv_ );
+            DiphotonMva_->AddVariable( "CosPhi", &CosPhi_ );
+            DiphotonMva_->AddVariable( "vtxprob", &vtxprob_ );
             //            DiphotonMva_->AddSpectator("sigmarv_decorr", &sigmarv_decorr_       );
             //            DiphotonMva_->AddSpectator("Background_wei", &weightBkg_           );            
             DiphotonMva_->BookMVA( "BDT", diphotonMVAweightfile_.fullPath() );
             //            std::cout << "finished reading mva" << std::endl;
+            XgbDiphotonMva_.reset( new TMVA::Reader( "!Color:Silent" ) );
+            XgbDiphotonMva_->AddVariable( "leadmva", &leadmva_ );
+            XgbDiphotonMva_->AddVariable( "subleadmva", &subleadmva_ );
+            XgbDiphotonMva_->AddVariable( "leadptom", &leadptom_ );
+            XgbDiphotonMva_->AddVariable( "subleadptom", &subleadptom_ );
+            XgbDiphotonMva_->AddVariable( "leadeta", &leadeta_ );
+            XgbDiphotonMva_->AddVariable( "subleadeta", &subleadeta_ );
+            XgbDiphotonMva_->AddVariable( "CosPhi", &CosPhi_ );
+            XgbDiphotonMva_->AddVariable( "vtxprob", &vtxprob_ );
+            XgbDiphotonMva_->AddVariable( "sigmarv", &sigmarv_ );
+            XgbDiphotonMva_->AddVariable( "sigmawv", &sigmawv_ );
+            XgbDiphotonMva_->BookMVA( "BDT", xgbDiphotonMVAweightfile_.fullPath() );
         }
 
         if(doDecorr_){
@@ -306,6 +333,7 @@ namespace flashgg {
             }
 
             mvares.result = DiphotonMva_->EvaluateMVA( "BDT" );
+            mvares.xgbResult = XgbDiphotonMva_->EvaluateMVA( "BDT" );
 
             mvares.leadptom = leadptom_;
             mvares.subleadptom = subleadptom_;

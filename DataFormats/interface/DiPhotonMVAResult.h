@@ -28,8 +28,10 @@ namespace flashgg {
         float CosPhi;
         float vtxprob;
         float mvaValue() const {return result;}
+        float xgbMvaValue() const {return xgbResult;}
         // Output
         float result;
+        float xgbResult;
     };
 
     typedef std::map<edm::Ptr<DiPhotonCandidate>, DiPhotonMVAResult> DiPhotonMVAResultMap;

@@ -40,7 +40,9 @@ void StageOneTag::computeStage1Kinematics( const edm::Handle<edm::View<flashgg::
     float dEta = 0.;
     float mjj = 0.;
     float ptHjj = 0.;
-    float mvaScore = this->diPhotonMVA().mvaValue();
+    //float mvaScore = this->diPhotonMVA().mvaValue();
+    float mvaScore = this->diPhotonMVA().xgbMvaValue(); // modified to give the xgboost score
+    mvaScore = 1. / ( 1. + exp( 0.5*log( 2./(mvaScore+1.) - 1 ) ) ); //invert this: https://github.com/jpata/mlglue/blob/master/mlglue/tree.py#L400-L409
     int vbfCat = -1;
     std::cout << "computing stage 1 kinematics, with combined BDT value = " << vbfDiPhoDiJet_mva_result_.VBFDiPhoDiJetMVAValue() << std::endl;
     if ( this->VBFDiPhoDiJetMVA().VBFDiPhoDiJetMVAValue() > -1. ) vbfCat = this->categoryNumber();
@@ -112,10 +114,10 @@ void StageOneTag::computeStage1Kinematics( const edm::Handle<edm::View<flashgg::
     // have now added two categories for each RECO tag, using the moment diphoton MVA, with boundaries currently hard-coded below..
     if ( ptV < -0.5 ) {
         if (nJ == 0) {
-            if (mvaScore > 0.46) {
+            if (mvaScore > 0.92) {
                 stage1recoTag_ = stage1recoTag::RECO_0J_Tag0;
             }
-            else if (mvaScore > -0.2) {
+            else if (mvaScore > 0.85) {
                 stage1recoTag_ = stage1recoTag::RECO_0J_Tag1;
             }
             else { 
@@ -123,37 +125,37 @@ void StageOneTag::computeStage1Kinematics( const edm::Handle<edm::View<flashgg::
             }
         } else if ( nJ == 1 ) {
             if ( ptH > 200 ) {
-                if (mvaScore > 0.86) {
+                if (mvaScore > 0.95) {
                     stage1recoTag_ = stage1recoTag::RECO_1J_PTH_GT200;
                 }
                 else { 
                     stage1recoTag_ = stage1recoTag::NOTAG;
                 }
             } else if ( ptH > 120. ) {
-                if (mvaScore > 0.8) {
+                if (mvaScore > 0.96) {
                     stage1recoTag_ = stage1recoTag::RECO_1J_PTH_120_200_Tag0;
                 }
-                else if (mvaScore > 0.4) {
+                else if (mvaScore > 0.93) {
                     stage1recoTag_ = stage1recoTag::RECO_1J_PTH_120_200_Tag1;
                 }
                 else { 
                     stage1recoTag_ = stage1recoTag::NOTAG;
                 }
             } else if ( ptH > 60. ) {
-                if (mvaScore > 0.64) {
+                if (mvaScore > 0.95) {
                     stage1recoTag_ = stage1recoTag::RECO_1J_PTH_60_120_Tag0;
                 }
-                else if (mvaScore > 0.1) {
+                else if (mvaScore > 0.88) {
                     stage1recoTag_ = stage1recoTag::RECO_1J_PTH_60_120_Tag1;
                 }
                 else { 
                     stage1recoTag_ = stage1recoTag::NOTAG;
                 }
             } else {
-                if (mvaScore > 0.56) {
+                if (mvaScore > 0.93) {
                     stage1recoTag_ = stage1recoTag::RECO_1J_PTH_0_60_Tag0;
                 }
-                else if (mvaScore > -0.05) {
+                else if (mvaScore > 0.88) {
                     stage1recoTag_ = stage1recoTag::RECO_1J_PTH_0_60_Tag1;
                 }
                 else { 
@@ -162,10 +164,10 @@ void StageOneTag::computeStage1Kinematics( const edm::Handle<edm::View<flashgg::
             }
         } else { // 2 jets
             if ( ptH > 200 ) {
-                if (mvaScore > 0.92) {
+                if (mvaScore > 0.97) {
                     stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_GT200_Tag0;
                 }
-                else if (mvaScore > 0.8) {
+                else if (mvaScore > 0.94) {
                     stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_GT200_Tag1;
                 }
                 else { 
@@ -200,30 +202,30 @@ void StageOneTag::computeStage1Kinematics( const edm::Handle<edm::View<flashgg::
                     }
                 }
             } else if ( ptH > 120. ) {
-                if (mvaScore > 0.86) {
+                if (mvaScore > 0.96) {
                     stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_120_200_Tag0;
                 }
-                else if (mvaScore > 0.5) {
+                else if (mvaScore > 0.93) {
                     stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_120_200_Tag1;
                 }
                 else { 
                     stage1recoTag_ = stage1recoTag::NOTAG;
                 }
             } else if ( ptH > 60. ) {
-                if (mvaScore > 0.75) {
+                if (mvaScore > 0.95) {
                     stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_60_120_Tag0;
                 }
-                else if (mvaScore > 0.3) {
+                else if (mvaScore > 0.88) {
                     stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_60_120_Tag1;
                 }
                 else { 
                     stage1recoTag_ = stage1recoTag::NOTAG;
                 }
             } else {
-                if (mvaScore > 0.56) {
+                if (mvaScore > 0.91) {
                     stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_0_60_Tag0;
                 }
-                else if (mvaScore > -0.1) {
+                else if (mvaScore > 0.845) {
                     stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_0_60_Tag1;
                 }
                 else { 
