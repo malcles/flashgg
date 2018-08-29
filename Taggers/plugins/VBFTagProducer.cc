@@ -417,8 +417,18 @@ namespace flashgg {
                                            *( njets.product() ),
                                            *( pTH.product() ),
                                            *( pTV.product() ) );
+                    truth1_obj.setHTXSInfo( *( stage0cat.product() ),
+                                           *( stage1cat.product() ),
+                                           *( njets.product() ),
+                                           *( pTH.product() ),
+                                           *( pTV.product() ) );
                 } else if ( htxsClassification.isValid() ) {
                     truth_obj.setHTXSInfo( htxsClassification->stage0_cat,
+                                           htxsClassification->stage1_cat_pTjet30GeV,
+                                           htxsClassification->jets30.size(),
+                                           htxsClassification->p4decay_higgs.pt(),
+                                           htxsClassification->p4decay_V.pt() );
+                    truth1_obj.setHTXSInfo( htxsClassification->stage0_cat,
                                            htxsClassification->stage1_cat_pTjet30GeV,
                                            htxsClassification->jets30.size(),
                                            htxsClassification->p4decay_higgs.pt(),
