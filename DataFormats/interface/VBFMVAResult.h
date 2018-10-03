@@ -75,10 +75,11 @@ namespace flashgg {
         float dijet_subsubleadEta;
         float dijet_SubsubJPt;
 
-        
         float dipho_PToM;
         float leadPho_PToM;
         float sublPho_PToM;
+
+        float ptHjj;
         
         // some 3-jet based variables 
         

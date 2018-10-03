@@ -39,6 +39,7 @@ jetStudyVariables = [
                     "n_rec_jets := VBFMVA().n_rec_jets",
                     "diphoptom  := VBFDiPhoDiJetMVA().dipho_PToM",
                     "diphomva   := diPhotonMVA().result",
+                    "diphomvaxgb   := 1. / ( 1. + exp( 0.5*log( 2./(diPhotonMVA().xgbResult+1.) - 1 ) ) )",
                     #diphoton BDT inputs
                     "leadmva     := diPhotonMVA().leadmva",
                     "subleadmva  := diPhotonMVA().subleadmva",
@@ -52,6 +53,7 @@ jetStudyVariables = [
                     "sigmawv     := diPhotonMVA().sigmawv",
                     #jet-related variables
                     "VBFMVAValue              := VBFMVA().VBFMVAValue()",
+                    "ptHjj                    := VBFMVA().ptHjj()",
                     "dijet_Mjj                := VBFMVA().dijet_Mjj",
                     "dijet_leadEta            := VBFMVA().dijet_leadEta",
                     "dijet_subleadEta         := VBFMVA().dijet_subleadEta",

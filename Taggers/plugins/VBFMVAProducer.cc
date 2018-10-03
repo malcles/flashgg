@@ -77,6 +77,8 @@ namespace flashgg {
         float leadPho_PToM_;
         float sublPho_PToM_;
 
+        float ptHjj_   ;
+
         //FIXME temp for jet studies
         float dijet_leadPUMVA_      ; 
         float dijet_leadDeltaPhi_   ; 
@@ -148,6 +150,8 @@ namespace flashgg {
 
         dijet_subsubleadEta_ = -999.;
         dijet_SubsubJPt_ = -999.;
+
+        ptHjj_        = -999.;
         
         if (_MVAMethod != ""){
             VbfMva_.reset( new TMVA::Reader( "!Color:Silent" ) );
@@ -236,6 +240,8 @@ namespace flashgg {
            
             dijet_subsubleadEta_ = -999.;
             dijet_SubsubJPt_ = -999.;
+
+            ptHjj_        = -999.;
  
             // First find dijet by looking for highest-pt jets...
             std::pair <int, int>     dijet_indices( -1, -1 );
@@ -430,6 +436,8 @@ namespace flashgg {
                 dipho_PToM_       = (diPhotonP4s[0] + diPhotonP4s[1]).Pt()/(diPhotonP4s[0] + diPhotonP4s[1]).M();
                 leadPho_PToM_     = diPhotonP4s[0].pt()/(diPhotonP4s[0] + diPhotonP4s[1]).M();
                 sublPho_PToM_     = diPhotonP4s[1].pt()/(diPhotonP4s[0] + diPhotonP4s[1]).M();
+
+                ptHjj_           = (dijetP4s.first + dijetP4s.second + diPhotonP4s[0] + diPhotonP4s[1]).pt();
                 
                 dijet_minDRJetPho_ = std::min( std::min(deltaR( dijetP4s.first ,diPhotonP4s[0] ),
                                                         deltaR( dijetP4s.second,diPhotonP4s[0] )),
@@ -534,6 +542,8 @@ namespace flashgg {
 
             mvares.dijet_SubsubJPt = dijet_SubsubJPt_;
             mvares.dijet_subsubleadEta = dijet_subsubleadEta_;
+
+            mvares.ptHjj         = ptHjj_;
             
             vbf_results->push_back( mvares );
         }
