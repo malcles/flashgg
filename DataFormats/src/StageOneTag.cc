@@ -37,7 +37,7 @@ void StageOneTag::computeStage1Kinematics( const edm::Handle<edm::View<flashgg::
     stage1recoTag_ = stage1recoTag::LOGICERROR;
     float ptH = this->diPhoton()->pt();
     unsigned int nJ = 0;
-    float dEta = 0.;
+    //float dEta = 0.;
     float mjj = 0.;
     float ptHjj = 0.;
     //float mvaScore = this->diPhotonMVA().mvaValue();
@@ -47,6 +47,7 @@ void StageOneTag::computeStage1Kinematics( const edm::Handle<edm::View<flashgg::
     std::cout << "computing stage 1 kinematics, with combined BDT value = " << vbfDiPhoDiJet_mva_result_.VBFDiPhoDiJetMVAValue() << std::endl;
     if ( this->VBFDiPhoDiJetMVA().VBFDiPhoDiJetMVAValue() > -1. ) vbfCat = this->categoryNumber();
     std::cout << "which has VBF category number = " << vbfCat << std::endl << std::endl;
+    float dijetScore = this->VBFMVA().VBFMVAValue();
     edm::Ptr<flashgg::Jet> j0;
     edm::Ptr<flashgg::Jet> j1;
     for ( unsigned int i = 0 ; i < jets->size(); i++ ) {
@@ -106,7 +107,7 @@ void StageOneTag::computeStage1Kinematics( const edm::Handle<edm::View<flashgg::
     string nlepstring = std::to_string(nlep)+"LEP";
 
     if ( nJ >= 2 ) {
-        dEta = fabs( j0->eta() - j1->eta() );
+        //dEta = fabs( j0->eta() - j1->eta() );
         mjj = ( j0->p4() + j1->p4() ).mass();
         ptHjj = ( j0->p4() + j1->p4() + this->diPhoton()->p4() ).pt();
         //        std::cout << " dEta=" << dEta << " mjj=" << mjj << " ptHjj=" << ptHjj << std::endl;
@@ -163,7 +164,7 @@ void StageOneTag::computeStage1Kinematics( const edm::Handle<edm::View<flashgg::
                 }
             }
         } else { // 2 jets
-            if ( ptH > 200 ) {
+            if ( ptH > 200 ) { //FIXME prioritise this over VBF???
                 if (mvaScore > 0.97) {
                     stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_GT200_Tag0;
                 }
@@ -173,7 +174,7 @@ void StageOneTag::computeStage1Kinematics( const edm::Handle<edm::View<flashgg::
                 else { 
                     stage1recoTag_ = stage1recoTag::NOTAG;
                 }
-            } else if ( mjj > 400. && dEta > 2.8 ) { //FIXME want this cut or not??
+            /*} else if ( mjj > 400. && dEta > 2.8 ) { //FIXME want this cut or not??
                 if ( ptHjj < 25. ) {
                     if (vbfCat == 0) {
                         stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3VETO_Tag0;
@@ -196,6 +197,28 @@ void StageOneTag::computeStage1Kinematics( const edm::Handle<edm::View<flashgg::
                     }
                     else if (vbfCat == 2) {
                         stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3_Tag2;
+                    }
+                    else { 
+                        stage1recoTag_ = stage1recoTag::NOTAG;
+                    }
+                }*/
+            } else if ( mjj > 250. && j0->p4().pt() > 40. && j1->p4().pt() > 30. ) { //cuts optimised using data-driven dijet BDT plus new diphoton BDT
+                if ( ptHjj < 25. ) {
+                    if (dijetScore > 0.492 && mvaScore > 0.723) {
+                        stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3VETO_Tag0;
+                    }
+                    else if (dijetScore > -0.548 && mvaScore > 0.646) {
+                        stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3VETO_Tag1;
+                    }
+                    else { 
+                        stage1recoTag_ = stage1recoTag::NOTAG;
+                    }
+                } else {
+                    if (dijetScore > 0.530 && mvaScore > 0.676) {
+                        stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3_Tag0;
+                    }
+                    else if (dijetScore > -0.491 && mvaScore > 0.606) {
+                        stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3_Tag1;
                     }
                     else { 
                         stage1recoTag_ = stage1recoTag::NOTAG;
