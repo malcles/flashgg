@@ -479,14 +479,18 @@ namespace flashgg {
 
             }else{
                 // FIXME can change this to add more info in cases without valid dijet
-                //mvares.leadJet_ptr    = edm::Ptr<flashgg::Jet>();
-                //mvares.subleadJet_ptr = edm::Ptr<flashgg::Jet>();
                 if( dijet_indices.first != -1 ) {
+                    mvares.leadJet_ptr    = Jets[jetCollectionIndex]->ptrAt( dijet_indices.first );
+                    mvares.subleadJet_ptr = edm::Ptr<flashgg::Jet>();
                     dijet_leadEta_         = Jets[jetCollectionIndex]->ptrAt( dijet_indices.first )->eta();
                     dijet_LeadJPt_         = Jets[jetCollectionIndex]->ptrAt( dijet_indices.first )->pt();
                     dijet_leadPUMVA_       = Jets[jetCollectionIndex]->ptrAt( dijet_indices.first )->puJetIdMVA();
                     dijet_leadDeltaPhi_    = deltaPhi( Jets[jetCollectionIndex]->ptrAt( dijet_indices.first )->phi(), (diPhotonP4s[0]+diPhotonP4s[1]).phi());
                     dijet_leadDeltaEta_    = Jets[jetCollectionIndex]->ptrAt( dijet_indices.first )->eta() - (diPhotonP4s[0]+diPhotonP4s[1]).eta();
+                }
+                else {
+                    mvares.leadJet_ptr    = edm::Ptr<flashgg::Jet>();
+                    mvares.subleadJet_ptr = edm::Ptr<flashgg::Jet>();
                 }
 
             }

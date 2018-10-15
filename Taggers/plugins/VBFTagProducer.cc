@@ -335,12 +335,16 @@ namespace flashgg {
                 continue;
             }
 
-            int catnum = chooseCategory( vbfdipho_mvares->vbfDiPhoDiJetMvaResult );
-            tag_obj.setCategoryNumber( catnum );
+            //FIXME testing this out
+            //int catnum = chooseCategory( vbfdipho_mvares->vbfDiPhoDiJetMvaResult );
+            //tag_obj.setCategoryNumber( catnum );
+            tag_obj.setCategoryNumber( 1 );
 
-            unsigned int jetCollectionIndex = diPhotons->ptrAt( candIndex )->jetCollectionIndex();
-            stage1tag_obj.setCategoryNumber( catnum );
-            stage1tag_obj.computeStage1Kinematics( Jets[jetCollectionIndex] );
+            //FIXME
+            //unsigned int jetCollectionIndex = diPhotons->ptrAt( candIndex )->jetCollectionIndex();
+            //stage1tag_obj.setCategoryNumber( catnum );
+            //stage1tag_obj.computeStage1Kinematics( Jets[jetCollectionIndex] );
+            stage1tag_obj.computeStage1Kinematics( vbfdipho_mvares->vbfMVAResult().leadJet_ptr, vbfdipho_mvares->vbfMVAResult().subleadJet_ptr );
 
             unsigned int index_gp_leadjet = std::numeric_limits<unsigned int>::max();
             unsigned int index_gp_subleadjet = std::numeric_limits<unsigned int>::max();

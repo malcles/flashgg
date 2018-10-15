@@ -43,11 +43,13 @@ void StageOneTag::computeStage1Kinematics( const edm::Handle<edm::View<flashgg::
     //float mvaScore = this->diPhotonMVA().mvaValue();
     float mvaScore = this->diPhotonMVA().xgbMvaValue(); // modified to give the xgboost score
     mvaScore = 1. / ( 1. + exp( 0.5*log( 2./(mvaScore+1.) - 1 ) ) ); //invert this: https://github.com/jpata/mlglue/blob/master/mlglue/tree.py#L400-L409
-    int vbfCat = -1;
-    std::cout << "computing stage 1 kinematics, with combined BDT value = " << vbfDiPhoDiJet_mva_result_.VBFDiPhoDiJetMVAValue() << std::endl;
-    if ( this->VBFDiPhoDiJetMVA().VBFDiPhoDiJetMVAValue() > -1. ) vbfCat = this->categoryNumber();
-    std::cout << "which has VBF category number = " << vbfCat << std::endl << std::endl;
+    //int vbfCat = -1;
+    //std::cout << "computing stage 1 kinematics, with combined BDT value = " << vbfDiPhoDiJet_mva_result_.VBFDiPhoDiJetMVAValue() << std::endl;
+    //if ( this->VBFDiPhoDiJetMVA().VBFDiPhoDiJetMVAValue() > -1. ) vbfCat = this->categoryNumber();
+    //std::cout << "which has VBF category number = " << vbfCat << std::endl << std::endl;
     float dijetScore = this->VBFMVA().VBFMVAValue();
+    float leadMvaScore = this->diPhotonMVA().leadmva;
+    float subleadMvaScore = this->diPhotonMVA().subleadmva;
     edm::Ptr<flashgg::Jet> j0;
     edm::Ptr<flashgg::Jet> j1;
     for ( unsigned int i = 0 ; i < jets->size(); i++ ) {
@@ -164,46 +166,9 @@ void StageOneTag::computeStage1Kinematics( const edm::Handle<edm::View<flashgg::
                 }
             }
         } else { // 2 jets
-            if ( ptH > 200 ) { //FIXME prioritise this over VBF???
-                if (mvaScore > 0.97) {
-                    stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_GT200_Tag0;
-                }
-                else if (mvaScore > 0.94) {
-                    stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_GT200_Tag1;
-                }
-                else { 
-                    stage1recoTag_ = stage1recoTag::NOTAG;
-                }
-            /*} else if ( mjj > 400. && dEta > 2.8 ) { //FIXME want this cut or not??
-                if ( ptHjj < 25. ) {
-                    if (vbfCat == 0) {
-                        stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3VETO_Tag0;
-                    }
-                    else if (vbfCat == 1) {
-                        stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3VETO_Tag1;
-                    }
-                    else if (vbfCat == 2) {
-                        stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3VETO_Tag2;
-                    }
-                    else { 
-                        stage1recoTag_ = stage1recoTag::NOTAG;
-                    }
-                } else {
-                    if (vbfCat == 0) {
-                        stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3_Tag0;
-                    }
-                    else if (vbfCat == 1) {
-                        stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3_Tag1;
-                    }
-                    else if (vbfCat == 2) {
-                        stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3_Tag2;
-                    }
-                    else { 
-                        stage1recoTag_ = stage1recoTag::NOTAG;
-                    }
-                }*/
-            } else if ( mjj > 250. && j0->p4().pt() > 40. && j1->p4().pt() > 30. ) { //cuts optimised using data-driven dijet BDT plus new diphoton BDT
-                if ( ptHjj < 25. ) {
+            bool reProcess = false;
+            if ( mjj > 250. && j0->p4().pt() > 40. && j1->p4().pt() > 30. && leadMvaScore > -0.2 && subleadMvaScore > -0.2 ) { //cuts optimised using data-driven dijet BDT plus new diphoton BDT
+                if ( ptHjj > 0. && ptHjj < 25. ) {
                     if (dijetScore > 0.492 && mvaScore > 0.723) {
                         stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3VETO_Tag0;
                     }
@@ -211,9 +176,9 @@ void StageOneTag::computeStage1Kinematics( const edm::Handle<edm::View<flashgg::
                         stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3VETO_Tag1;
                     }
                     else { 
-                        stage1recoTag_ = stage1recoTag::NOTAG;
+                        reProcess = true;
                     }
-                } else {
+                } else if ( ptHjj > 25. ) {
                     if (dijetScore > 0.530 && mvaScore > 0.676) {
                         stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3_Tag0;
                     }
@@ -221,42 +186,222 @@ void StageOneTag::computeStage1Kinematics( const edm::Handle<edm::View<flashgg::
                         stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3_Tag1;
                     }
                     else { 
+                        reProcess = true;
+                    }
+                }
+            }
+            if ( reProcess ) {
+                if ( ptH > 200 ) {
+                    if (mvaScore > 0.97) {
+                        stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_GT200_Tag0;
+                    }
+                    else if (mvaScore > 0.94) {
+                        stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_GT200_Tag1;
+                    }
+                    else { 
+                        stage1recoTag_ = stage1recoTag::NOTAG;
+                    }
+                } else if ( ptH > 120. ) {
+                    if (mvaScore > 0.965) {
+                        stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_120_200_Tag0;
+                    }
+                    else if (mvaScore > 0.925) {
+                        stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_120_200_Tag1;
+                    }
+                    else { 
+                        stage1recoTag_ = stage1recoTag::NOTAG;
+                    }
+                } else if ( ptH > 60. ) {
+                    if (mvaScore > 0.950) {
+                        stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_60_120_Tag0;
+                    }
+                    else if (mvaScore > 0.905) {
+                        stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_60_120_Tag1;
+                    }
+                    else { 
+                        stage1recoTag_ = stage1recoTag::NOTAG;
+                    }
+                } else {
+                    if (mvaScore > 0.930) {
+                        stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_0_60_Tag0;
+                    }
+                    else if (mvaScore > 0.875) {
+                        stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_0_60_Tag1;
+                    }
+                    else { 
                         stage1recoTag_ = stage1recoTag::NOTAG;
                     }
                 }
-            } else if ( ptH > 120. ) {
-                if (mvaScore > 0.965) {
-                    stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_120_200_Tag0;
+            }
+        }
+    } else { // Leptonic vector boson assigned. Leave this up to existing VH tags for now
+        stage1recoTag_ = stage1recoTag::NOTAG;
+    }
+}
+
+void StageOneTag::computeStage1Kinematics( const edm::Ptr<flashgg::Jet> j0, const edm::Ptr<flashgg::Jet> j1, float ptV, float lepeta1, float lepphi1, float lepeta2, float lepphi2 ) {
+    stage1recoTag_ = stage1recoTag::LOGICERROR;
+    float ptH = this->diPhoton()->pt();
+    unsigned int nJ = 0;
+    //float dEta = 0.;
+    float mjj = 0.;
+    float ptHjj = 0.;
+    //float mvaScore = this->diPhotonMVA().mvaValue();
+    float mvaScore = this->diPhotonMVA().xgbMvaValue(); // modified to give the xgboost score
+    mvaScore = 1. / ( 1. + exp( 0.5*log( 2./(mvaScore+1.) - 1 ) ) ); //invert this: https://github.com/jpata/mlglue/blob/master/mlglue/tree.py#L400-L409
+    //int vbfCat = -1;
+    //std::cout << "computing stage 1 kinematics, with combined BDT value = " << vbfDiPhoDiJet_mva_result_.VBFDiPhoDiJetMVAValue() << std::endl;
+    //if ( this->VBFDiPhoDiJetMVA().VBFDiPhoDiJetMVAValue() > -1. ) vbfCat = this->categoryNumber();
+    //std::cout << "which has VBF category number = " << vbfCat << std::endl << std::endl;
+    float dijetScore = this->VBFMVA().VBFMVAValue();
+    float leadMvaScore = this->diPhotonMVA().leadmva;
+    float subleadMvaScore = this->diPhotonMVA().subleadmva;
+    float leadPToM = this->diPhotonMVA().leadptom;
+    float subleadPToM = this->diPhotonMVA().subleadptom;
+    
+    if ( !j0.isNull() ) {
+        if ( j0->pt() > 30. ) { nJ += 1; }
+    }
+    if ( !j1.isNull() ) {
+        if ( j1->pt() > 30. ) { nJ += 1; }
+    }
+
+    unsigned nlep = 0;
+    if (lepphi1 > -998. ) nlep++;
+    if (lepphi2 > -998. ) nlep++;
+    string nlepstring = std::to_string(nlep)+"LEP";
+
+    if ( nJ >= 2 ) {
+        //dEta = fabs( j0->eta() - j1->eta() );
+        mjj = ( j0->p4() + j1->p4() ).mass();
+        ptHjj = ( j0->p4() + j1->p4() + this->diPhoton()->p4() ).pt();
+        //        std::cout << " dEta=" << dEta << " mjj=" << mjj << " ptHjj=" << ptHjj << std::endl;
+    }
+    // have now added two categories for each RECO tag, using the moment diphoton MVA, with boundaries currently hard-coded below..
+    if ( ptV < -0.5 ) {
+        if (nJ == 0) {
+            if (mvaScore > 0.831) {
+                stage1recoTag_ = stage1recoTag::RECO_0J_Tag0;
+            }
+            else if (mvaScore > 0.658) {
+                stage1recoTag_ = stage1recoTag::RECO_0J_Tag1;
+            }
+            else { 
+                stage1recoTag_ = stage1recoTag::NOTAG;
+            }
+        } else if ( nJ == 1 ) {
+            if ( ptH > 200 ) {
+                if (mvaScore > 0.981) {
+                    stage1recoTag_ = stage1recoTag::RECO_1J_PTH_GT200;
                 }
-                else if (mvaScore > 0.925) {
-                    stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_120_200_Tag1;
+                else { 
+                    stage1recoTag_ = stage1recoTag::NOTAG;
+                }
+            } else if ( ptH > 120. ) {
+                if (mvaScore > 0.967) {
+                    stage1recoTag_ = stage1recoTag::RECO_1J_PTH_120_200_Tag0;
+                }
+                else if (mvaScore > 0.917) {
+                    stage1recoTag_ = stage1recoTag::RECO_1J_PTH_120_200_Tag1;
                 }
                 else { 
                     stage1recoTag_ = stage1recoTag::NOTAG;
                 }
             } else if ( ptH > 60. ) {
-                if (mvaScore > 0.950) {
-                    stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_60_120_Tag0;
+                if (mvaScore > 0.933) {
+                    stage1recoTag_ = stage1recoTag::RECO_1J_PTH_60_120_Tag0;
                 }
-                else if (mvaScore > 0.905) {
-                    stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_60_120_Tag1;
+                else if (mvaScore > 0.813) {
+                    stage1recoTag_ = stage1recoTag::RECO_1J_PTH_60_120_Tag1;
                 }
                 else { 
                     stage1recoTag_ = stage1recoTag::NOTAG;
                 }
             } else {
-                if (mvaScore > 0.930) {
-                    stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_0_60_Tag0;
+                if (mvaScore > 0.912) {
+                    stage1recoTag_ = stage1recoTag::RECO_1J_PTH_0_60_Tag0;
                 }
-                else if (mvaScore > 0.875) {
-                    stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_0_60_Tag1;
+                else if (mvaScore > 0.810) {
+                    stage1recoTag_ = stage1recoTag::RECO_1J_PTH_0_60_Tag1;
                 }
                 else { 
                     stage1recoTag_ = stage1recoTag::NOTAG;
                 }
             }
+        } else { // 2 jets
+            bool reProcess = false;
+            if ( mjj > 250. && j0->p4().pt() > 40. && j1->p4().pt() > 30. && leadMvaScore > -0.2 && subleadMvaScore > -0.2 ) { //cuts optimised using data-driven dijet BDT plus new diphoton BDT
+                if ( ptHjj > 0. && ptHjj < 25. ) {
+                    if (dijetScore > 0.209 && mvaScore > 0.993) {
+                        stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3VETO_Tag0;
+                    }
+                    else if (dijetScore > -0.673 && mvaScore > 0.909) {
+                        stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3VETO_Tag1;
+                    }
+                    else { 
+                        reProcess = true;
+                    }
+                } else if ( ptHjj > 25. ) {
+                    if (dijetScore > 0.497 && mvaScore > 0.782) {
+                        stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3_Tag0;
+                    }
+                    else if (dijetScore > -0.484 && mvaScore > 0.757) {
+                        stage1recoTag_ = stage1recoTag::RECO_VBFTOPO_JET3_Tag1;
+                    }
+                    else { 
+                        reProcess = true;
+                    }
+                }
+            }
+            if ( reProcess ) {
+                if ( ptH > 200 ) {
+                    if (mvaScore > 0.984) {
+                        stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_GT200_Tag0;
+                    }
+                    else if (mvaScore > 0.957) {
+                        stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_GT200_Tag1;
+                    }
+                    else { 
+                        stage1recoTag_ = stage1recoTag::NOTAG;
+                    }
+                } else if ( ptH > 120. ) {
+                    if (mvaScore > 0.968) {
+                        stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_120_200_Tag0;
+                    }
+                    else if (mvaScore > 0.897) {
+                        stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_120_200_Tag1;
+                    }
+                    else { 
+                        stage1recoTag_ = stage1recoTag::NOTAG;
+                    }
+                } else if ( ptH > 60. ) {
+                    if (mvaScore > 0.923) {
+                        stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_60_120_Tag0;
+                    }
+                    else if (mvaScore > 0.777) {
+                        stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_60_120_Tag1;
+                    }
+                    else { 
+                        stage1recoTag_ = stage1recoTag::NOTAG;
+                    }
+                } else {
+                    if (mvaScore > 0.904) {
+                        stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_0_60_Tag0;
+                    }
+                    else if (mvaScore > 0.795) {
+                        stage1recoTag_ = stage1recoTag::RECO_GE2J_PTH_0_60_Tag1;
+                    }
+                    else { 
+                        stage1recoTag_ = stage1recoTag::NOTAG;
+                    }
+                }
+            }
         }
     } else { // Leptonic vector boson assigned. Leave this up to existing VH tags for now
+        stage1recoTag_ = stage1recoTag::NOTAG;
+    }
+    // reject events not passing the scaled pT cuts
+    if ( leadPToM < 1./3. || subleadPToM < 1./4. ) {
         stage1recoTag_ = stage1recoTag::NOTAG;
     }
 }
